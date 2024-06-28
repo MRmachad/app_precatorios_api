@@ -12,23 +12,25 @@ class UnidadeDeTrabalho:
         pass
     
     async def salveAlteracoes(self):
-        await self.session.commit()
-        pass
+        print("salveAlteracoes")
+        self.session.commit()
+        
 
     async def inicieTrasacao(self):
-        await self.session.begin()
-        pass
+        self.session.begin()
+        
 
     
     async def revertaTrasacao(self):
-        await self.session.rollback()
-        pass
+        print("revertaTrasacao")
+        self.session.rollback()
+        
 
     async def atualizeModel(self, model : SnippetModel):
-        await self.session.refresh(model)
-        pass
+        self.session.refresh(model)
+        
 
     async def execute(self, query : Select[Any]):
         return self.session.execute(query)
-        pass
+        
 

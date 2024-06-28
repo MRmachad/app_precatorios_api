@@ -4,7 +4,7 @@ from typing import Any
 
 import inject
 import requests
-from src.app.dominio.models.dadosTribunais.processo import ProcessoSchemma
+from src.app.dominio.models.dadosTribunais.processo import ProcessoMixin, ProcessoSchemma
 from src.app.dominio.services.servicoDeProcesso import ServicoDeProcesso
 from src.app.dominio.models.scrapping.baseScrapping import BaseScrapping
 from selenium import webdriver
@@ -14,10 +14,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service 
 from selenium.webdriver.chrome.options import Options 
 from webdriver_manager.chrome import ChromeDriverManager
-
-from selenium.webdriver.edge.service import Service as ServiceEdge
-from selenium.webdriver.edge.options import Options as OptionsEdge
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 class scrappingTJGO(BaseScrapping):
 
@@ -42,8 +38,7 @@ class scrappingTJGO(BaseScrapping):
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_argument("--disable-blink-features=AutomationOrigin")
         chrome_options.add_argument(f"user-agent={user_agent}")
-        driver_chrome = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)                    
-        driver_chrome.implicitly_wait(30)
+        driver_chrome = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)                  
         driver_chrome.set_page_load_timeout(30)
         
         size = 100
@@ -99,27 +94,35 @@ class scrappingTJGO(BaseScrapping):
                         print(processoCode)
                         print(numeroProcesso)
 
+                        driver.find_element(By.NAME, "ProcessoNumero").clear()
                         driver.find_element(By.NAME, "ProcessoNumero").send_keys(processoCode + Keys.RETURN)
                         driver.find_element(By.NAME, "imgSubmeter").click()
 
-                        serventia = driver.find_element(By.XPATH, '/html/body/div[4]/form/div[1]/fieldset/fieldset/fieldset[3]/span[1]')
-                        nome = driver.find_element(By.XPATH, '//span[@class="span1 nomes"]')
-                        valorCausa = driver.find_element(By.XPATH, '//*[@id="VisualizaDados"]/span[4]')
-                        assunto = driver.find_element(By.XPATH, '//*[@id="VisualizaDados"]/span[3]/table/tbody/tr/td')
+                        if(len(driver.find_elements(By.XPATH, '/html/body/div[4]/div[3]/div/button')) > 0):
+                            driver.find_elements(By.XPATH, '/html/body/div[4]/div[3]/div/button')[0].click()
+                            continue
+
+                        serventia = driver.find_elements(By.XPATH, '/html/body/div[4]/form/div[1]/fieldset/fieldset/fieldset[3]/span[1]')
+                        nome = driver.find_elements(By.XPATH, '//span[@class="span1 nomes"]')
+                        valorCausa = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[4]')
+                        assunto = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[3]/table/tbody/tr/td')
 
                         processo : ProcessoSchemma = ProcessoSchemma(
-                            NumeroProcesso = numeroProcesso,
                             Classe= classe,
-                            Nome= nome.text if nome != None else None,
-                            Assunto= assunto.text if assunto != None else None,
-                            Valor= valorCausa.text if valorCausa != None else None,
-                            Serventia = serventia.text if serventia != None else None
+                            NumeroProcesso = numeroProcesso,
+                            Nome= nome[0].text if len(nome) > 0  else None,
+                            Assunto= assunto[0].text if len(assunto) > 0  else None,
+                            Valor= valorCausa[0].text if len(valorCausa) > 0  else None,
+                            Serventia = serventia[0].text if len(serventia) > 0  else None
                         )
-                        print(processo)
-                        await servicoDeProcesso.adicione(processo)
+                        processo_criado : ProcessoMixin = await servicoDeProcesso.adicione(processo)
+                        print(processo_criado.to_dict())
+
                     except Exception as e:
                         print(f"Erro ao obter informações: {e}")
                         pass
+                    finally:
+                        driver.back()
             else:
                 break
 

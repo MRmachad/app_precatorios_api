@@ -49,11 +49,12 @@ class ServicoBase(ServicoBaseCore):
         data: SnippetSchema,
     ) -> SnippetModel:
         try:
-            print(data)
             db_model = self.model(**data.model_dump())
             self.repositorio.adicione(db_model)
             await self.unidadeDeTrabalho.salveAlteracoes()
             await self.unidadeDeTrabalho.atualizeModel(db_model)
+            
+            print("1")
             return db_model
         except IntegrityError:
             raise IntegrityConflictException(
