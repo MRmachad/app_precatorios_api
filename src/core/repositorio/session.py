@@ -6,7 +6,7 @@ class Session:
 
     def obtenha_engine(self):
         
-        DATABASE_URL = "mariadb+mariadbconnector://root:qwerty@localhost:3366/precatorios"
+        DATABASE_URL = "mariadb+mariadbconnector://root:qwerty@localhost:3307/precatorios"
 
         return create_engine(DATABASE_URL, echo=True)
 

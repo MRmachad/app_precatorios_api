@@ -76,6 +76,7 @@ class scrappingTJGO(BaseScrapping):
 
             if(response.ok):
                 for processo in json.loads(response.text)["hits"]["hits"]:
+                    ePrecatorio = False
                     classe = processo["_source"]["classe"]["nome"]
                     numeroProcesso = processo["_source"]["numeroProcesso"]
                     processoCode = f"{numeroProcesso[0:7]}-{numeroProcesso[7:9]}"
@@ -106,6 +107,15 @@ class scrappingTJGO(BaseScrapping):
                         nome = driver.find_elements(By.XPATH, '//span[@class="span1 nomes"]')
                         valorCausa = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[4]')
                         assunto = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[3]/table/tbody/tr/td')
+                        movimentacao = driver.find_elements(By.CLASS_NAME, "filtro_coluna_movimentacao")
+
+                        for item in movimentacao:
+                            if (("precatório") or ("proad") or ("depre")) not in item.text.lower():
+                                ePrecatorio = True
+                                break 
+
+                        if not ePrecatorio:
+                            break
 
                         processo : ProcessoSchemma = ProcessoSchemma(
                             Classe= classe,
