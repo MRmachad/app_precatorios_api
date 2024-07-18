@@ -15,12 +15,11 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options 
 from webdriver_manager.chrome import ChromeDriverManager
 
+from config import config
+
 class scrappingTJGO(BaseScrapping):
 
     def __init__(self) -> None:
-        self.baseAdress = "https://api-publica.datajud.cnj.jus.br/api_publica_tjgo"
-        self.token = "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw"
-        self.tokenScheme = "APIKey" 
         super().__init__()
         
     async def work(self) -> Any:
@@ -38,14 +37,19 @@ class scrappingTJGO(BaseScrapping):
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_argument("--disable-blink-features=AutomationOrigin")
         chrome_options.add_argument(f"user-agent={user_agent}")
-        driver_chrome = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)                  
+        if(config.ehProd):
+            driver_chrome = webdriver.Remote(config.data["hub_selenium"], options=chrome_options)
+        else:
+            driver_chrome = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options) 
+                         
         driver_chrome.set_page_load_timeout(30)
         
-        size = 100
+        size = 5
         search_after = None
-        tokenScheme = "APIKey" 
-        token = "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw"
-        baseAdress = "https://api-publica.datajud.cnj.jus.br/api_publica_tjgo"
+
+        token = config.data["connections"]["datajud"]["token"]
+        tokenScheme = config.data["connections"]["datajud"]["schema"]
+        baseAdress = config.data["connections"]["datajud"]["tribunais"]["tjgo"]
 
             
 
@@ -69,7 +73,6 @@ class scrappingTJGO(BaseScrapping):
                 }
             ]
         }
-
          
         while True:
             response = requests.post(f"{baseAdress}/_search", json=body, headers=headers)
@@ -81,11 +84,9 @@ class scrappingTJGO(BaseScrapping):
                     numeroProcesso = processo["_source"]["numeroProcesso"]
                     processoCode = f"{numeroProcesso[0:7]}-{numeroProcesso[7:9]}"
 
-                    search_after =  processo["sort"]                    
-                    print(f"after atualizado {search_after}")
+                    search_after =  processo["sort"]            
 
                     try:
-                        print("buscando por chrome")
                         driver_chrome.get("https://projudi.tjgo.jus.br/BuscaProcesso") 
                         driver_chrome.execute_script("window.Serventia = {};")                   
                         driver = driver_chrome
@@ -103,11 +104,11 @@ class scrappingTJGO(BaseScrapping):
                             driver.find_elements(By.XPATH, '/html/body/div[4]/div[3]/div/button')[0].click()
                             continue
 
-                        serventia = driver.find_elements(By.XPATH, '/html/body/div[4]/form/div[1]/fieldset/fieldset/fieldset[3]/span[1]')
                         nome = driver.find_elements(By.XPATH, '//span[@class="span1 nomes"]')
                         valorCausa = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[4]')
-                        assunto = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[3]/table/tbody/tr/td')
                         movimentacao = driver.find_elements(By.CLASS_NAME, "filtro_coluna_movimentacao")
+                        assunto = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[3]/table/tbody/tr/td')
+                        serventia = driver.find_elements(By.XPATH, '/html/body/div[4]/form/div[1]/fieldset/fieldset/fieldset[3]/span[1]')
 
                         for item in movimentacao:
                             if (("precatório") or ("proad") or ("depre")) not in item.text.lower():
@@ -125,8 +126,8 @@ class scrappingTJGO(BaseScrapping):
                             Valor= valorCausa[0].text if len(valorCausa) > 0  else None,
                             Serventia = serventia[0].text if len(serventia) > 0  else None
                         )
+
                         processo_criado : ProcessoMixin = await servicoDeProcesso.adicione(processo)
-                        print(processo_criado.to_dict())
 
                     except Exception as e:
                         print(f"Erro ao obter informações: {e}")
@@ -135,7 +136,6 @@ class scrappingTJGO(BaseScrapping):
                         driver.back()
             else:
                 break
-
             
             if search_after == None:
                 driver.quit()

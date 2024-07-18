@@ -1,14 +1,13 @@
 
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
+from config import config
 
 class Session:
 
     def obtenha_engine(self):
-        
-        DATABASE_URL = "mariadb+mariadbconnector://root:qwerty@localhost:3307/precatorios"
-
-        return create_engine(DATABASE_URL, echo=True)
+        print(f"Conexão {config.data["connections"]["database"]}")
+        return create_engine(config.data["connections"]["database"], echo=True)
 
     def obtenha_sessao(self):
         engine = self.obtenha_engine()

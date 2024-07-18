@@ -12,7 +12,6 @@ class UnidadeDeTrabalho:
         pass
     
     async def salveAlteracoes(self):
-        print("salveAlteracoes")
         self.session.commit()
         
 
@@ -22,8 +21,10 @@ class UnidadeDeTrabalho:
 
     
     async def revertaTrasacao(self):
-        print("revertaTrasacao")
         self.session.rollback()
+    
+    async def finaliseTrasacao(self):
+        self.session.close()
         
 
     async def atualizeModel(self, model : SnippetModel):
