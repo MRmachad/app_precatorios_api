@@ -37,7 +37,7 @@
     "app_precatorios": {
       "restart": "unless-stopped",
       "container_name": "app_precatorios",
-      "image": "umbit/precatorios_image:prod.1.0.0",
+      "image": "umbit/precatorios_image:prod.1.0.6",
       "depends_on": {
         "db_app_precatorios": {
           "condition": "service_healthy"

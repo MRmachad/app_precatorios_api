@@ -44,7 +44,7 @@ class scrappingTJGO(BaseScrapping):
                          
         driver_chrome.set_page_load_timeout(30)
         
-        size = 5
+        size = 100
         search_after = None
 
         token = config.data["connections"]["datajud"]["token"]
@@ -98,9 +98,6 @@ class scrappingTJGO(BaseScrapping):
                     except:
                         continue
                     try:
-                        print(processoCode)
-                        print(numeroProcesso)
-
                         driver.find_element(By.NAME, "ProcessoNumero").clear()
                         driver.find_element(By.NAME, "ProcessoNumero").send_keys(processoCode + Keys.RETURN)
                         driver.find_element(By.NAME, "imgSubmeter").click()
@@ -110,15 +107,15 @@ class scrappingTJGO(BaseScrapping):
                             continue
 
                         nome = driver.find_elements(By.XPATH, '//span[@class="span1 nomes"]')
-                        nomeAtivo : [] = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][legend=' Polo Ativo | Promovente']//div[text()='Nome']/following-sibling::span")
-                        nomePassivo= driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][legend=' Polo Passivo | Promovido']//div[text()='Nome']/following-sibling::span")
+                        nomeAtivo : [] = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[text()='Nome']/following-sibling::span")
+                        nomePassivo= driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[text()='Nome']/following-sibling::span")
                         valorCausa = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[4]')
                         movimentacao = driver.find_elements(By.CLASS_NAME, "filtro_coluna_movimentacao")
                         assunto = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[3]/table/tbody/tr/td')
                         serventia = driver.find_elements(By.XPATH, '/html/body/div[4]/form/div[1]/fieldset/fieldset/fieldset[3]/span[1]')
 
                         for item in movimentacao:
-                            if (("precatório") or ("proad") or ("depre")) not in item.text.lower():
+                            if ("precatório" in item.text.lower()) or ("proad" in item.text.lower()) or ("depre" in item.text.lower()):
                                 ePrecatorio = True
                                 break 
 
@@ -128,14 +125,14 @@ class scrappingTJGO(BaseScrapping):
                         processo : ProcessoSchemma = ProcessoSchemma(
                             Classe= classe,
                             NumeroProcesso = numeroProcesso,
-                            NomePoloAtivo= ", ".join([x.text for x in nomeAtivo]) if len(nomeAtivo) > 0  else None,
-                            NomePoloPassivo= ", ".join([x.text for x in nomePassivo]) if len(nomePassivo) > 0  else None,
-                            Assunto= assunto[0].text if len(assunto) > 0  else None,
-                            Valor= valorCausa[0].text if len(valorCausa) > 0  else None,
-                            Serventia = serventia[0].text if len(serventia) > 0  else None,
-                            nome_ativos_banco = [nomeAtivo[c].text for c in range(len(nomeAtivo))] if nomeAtivo else [],
-                            nome_passivo_banco = [nomePassivo[d].text for d in range(len(nomePassivo))] if nomePassivo else []
-                
+                            NumeroProcessoConsulta= processoCode,
+                            CpfCNPJNomePoloAtivo= '',
+                            CpfCNPJPoloPassivo='',
+                            NomePoloAtivo= ", ".join([x.text for x in nomeAtivo]) if len(nomeAtivo) > 0  else '',
+                            NomePoloPassivo= ", ".join([x.text for x in nomePassivo]) if len(nomePassivo) > 0  else '',
+                            Assunto= assunto[0].text if len(assunto) > 0  else '',
+                            Valor= valorCausa[0].text if len(valorCausa) > 0  else '',
+                            Serventia = serventia[0].text if len(serventia) > 0  else ''                
                         )
 
                         processo_criado : ProcessoMixin = await servicoDeProcesso.adicione(processo)
