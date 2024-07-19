@@ -57,8 +57,13 @@ class scrappingTJGO(BaseScrapping):
         body = {
             "size": size,
             "query": {
-                "match": {
-                    "classe.codigo": 12078
+                "bool": {
+                    "should": [
+                        {"match": {"classe.codigo": 12168}},
+                        {"match": {"classe.codigo": 156}},
+                        {"match": {"classe.codigo": 12079}},
+                        {"match": {"classe.codigo": 12078}}
+                    ]
                 }
             },
             "sort": [
@@ -105,6 +110,8 @@ class scrappingTJGO(BaseScrapping):
 
                         serventia = driver.find_elements(By.XPATH, '/html/body/div[4]/form/div[1]/fieldset/fieldset/fieldset[3]/span[1]')
                         nome = driver.find_elements(By.XPATH, '//span[@class="span1 nomes"]')
+                        nomeAtivo = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][legend=' Polo Ativo | Promovente']//div[text()='Nome']/following-sibling::span")
+                        nomePassivo= driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][legend=' Polo Passivo | Promovido']//div[text()='Nome']/following-sibling::span")
                         valorCausa = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[4]')
                         assunto = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[3]/table/tbody/tr/td')
                         movimentacao = driver.find_elements(By.CLASS_NAME, "filtro_coluna_movimentacao")
@@ -123,7 +130,10 @@ class scrappingTJGO(BaseScrapping):
                             Nome= nome[0].text if len(nome) > 0  else None,
                             Assunto= assunto[0].text if len(assunto) > 0  else None,
                             Valor= valorCausa[0].text if len(valorCausa) > 0  else None,
-                            Serventia = serventia[0].text if len(serventia) > 0  else None
+                            Serventia = serventia[0].text if len(serventia) > 0  else None,
+                            nome_ativos_banco = [nomeAtivo[c].text for c in range(len(nomeAtivo))] if nomeAtivo else [],
+                            nome_passivo_banco = [nomePassivo[d].text for d in range(len(nomePassivo))] if nomePassivo else []
+                
                         )
                         processo_criado : ProcessoMixin = await servicoDeProcesso.adicione(processo)
                         print(processo_criado.to_dict())
