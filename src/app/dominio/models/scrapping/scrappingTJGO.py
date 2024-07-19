@@ -118,7 +118,7 @@ class scrappingTJGO(BaseScrapping):
                         serventia = driver.find_elements(By.XPATH, '/html/body/div[4]/form/div[1]/fieldset/fieldset/fieldset[3]/span[1]')
 
                         for item in movimentacao:
-                            if (("precatório") or ("proad") or ("depre")) not in item.text.lower():
+                            if ("precatório" in item.text.lower()) or ("proad" in item.text.lower()) or ("depre" in item.text.lower()):
                                 ePrecatorio = True
                                 break 
 
