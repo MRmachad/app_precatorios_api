@@ -11,7 +11,7 @@ from src.core.worker.workerCron import WorkerCron
 
 class ScratchWorker(WorkerCron):
     def __init__(self) -> None:
-        super().__init__(1,True)
+        super().__init__(12,True)
 
     async def job(self) -> Any:
         import_submodules( "src.app.dominio.models.scrapping")

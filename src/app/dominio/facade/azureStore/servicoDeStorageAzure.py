@@ -9,12 +9,17 @@ from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient,Bl
 from src.app.dominio.models.storage.blob import BlobInfo
 from src.app.dominio.services.interfaces.servicoDeStorage import ServicoDeStorage
 
+from config import config
 
 class ServicoDeStorageAzure(ServicoDeStorage):
 
     def __init__(self):
+<<<<<<< HEAD
        #connect_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
         #self.blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+=======
+        self.blob_service_client = BlobServiceClient.from_connection_string(config.connections["storage"])
+>>>>>>> master
         pass
 
     async def removeBlob(self, container:str, id:str):
