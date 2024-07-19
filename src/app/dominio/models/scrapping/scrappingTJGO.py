@@ -110,7 +110,7 @@ class scrappingTJGO(BaseScrapping):
                             continue
 
                         nome = driver.find_elements(By.XPATH, '//span[@class="span1 nomes"]')
-                        nomeAtivo = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][legend=' Polo Ativo | Promovente']//div[text()='Nome']/following-sibling::span")
+                        nomeAtivo : [] = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][legend=' Polo Ativo | Promovente']//div[text()='Nome']/following-sibling::span")
                         nomePassivo= driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][legend=' Polo Passivo | Promovido']//div[text()='Nome']/following-sibling::span")
                         valorCausa = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[4]')
                         movimentacao = driver.find_elements(By.CLASS_NAME, "filtro_coluna_movimentacao")
@@ -128,7 +128,8 @@ class scrappingTJGO(BaseScrapping):
                         processo : ProcessoSchemma = ProcessoSchemma(
                             Classe= classe,
                             NumeroProcesso = numeroProcesso,
-                            Nome= nome[0].text if len(nome) > 0  else None,
+                            NomePoloAtivo= ", ".join([x.text for x in nomeAtivo]) if len(nomeAtivo) > 0  else None,
+                            NomePoloPassivo= ", ".join([x.text for x in nomePassivo]) if len(nomePassivo) > 0  else None,
                             Assunto= assunto[0].text if len(assunto) > 0  else None,
                             Valor= valorCausa[0].text if len(valorCausa) > 0  else None,
                             Serventia = serventia[0].text if len(serventia) > 0  else None,
