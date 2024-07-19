@@ -1,0 +1,54 @@
+{
+  "version": "3.1",
+  "services": {
+    "db_app_precatorios": {
+      "restart": "unless-stopped",
+      "image": "mariadb:latest",
+      "container_name": "db_app_precatorios",
+      "environment": {
+        "MARIADB_ROOT_PASSWORD": "qwerty"
+      },
+      "ports": [
+        "5016:3306"
+      ],
+      "volumes": [
+        "./mariadb_data_precatorios:/var/lib/mysql"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "healthcheck.sh",
+          "--connect",
+          "--innodb_initialized"
+        ],
+        "interval": "10s",
+        "timeout": "5s",
+        "retries": 3
+      }
+    },
+    "hub_selenium": {
+      "restart": "unless-stopped",
+      "container_name": "hub_selenium",
+      "image": "selenium/standalone-chrome",
+      "ports": [
+        "4444:4444"
+      ]
+    },
+    "app_precatorios": {
+      "restart": "unless-stopped",
+      "container_name": "app_precatorios",
+      "build": ".",
+      "depends_on": {
+        "db_app_precatorios": {
+          "condition": "service_healthy"
+        },
+        "hub_selenium": {
+          "condition": "service_started"
+        }
+      },
+      "ports": [
+        "5098:80"
+      ]
+    }
+  }
+}

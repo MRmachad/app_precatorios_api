@@ -54,13 +54,14 @@ class ServicoBase(ServicoBaseCore):
             await self.unidadeDeTrabalho.salveAlteracoes()
             await self.unidadeDeTrabalho.atualizeModel(db_model)
             
-            print("1")
             return db_model
         except IntegrityError:
+            await self.unidadeDeTrabalho.revertaTrasacao()
             raise IntegrityConflictException(
                 f"{self.model.__tablename__} conflicts with existing data.",
             )
         except Exception as e:
+            await self.unidadeDeTrabalho.revertaTrasacao()
             raise SnippetException(f"Unknown error occurred: {e}") from e
 
     async def adicione_muitos(
