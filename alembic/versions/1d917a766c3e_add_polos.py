@@ -1,8 +1,8 @@
-"""Initial migration
+"""add polos
 
-Revision ID: fdba981a6b67
+Revision ID: 1d917a766c3e
 Revises: 
-Create Date: 2024-06-26 21:37:06.113687
+Create Date: 2024-07-19 00:34:13.671525
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'fdba981a6b67'
+revision: str = '1d917a766c3e'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -23,7 +23,8 @@ def upgrade() -> None:
     op.create_table('processo',
     sa.Column('NumeroProcesso', sa.String(length=255), nullable=True),
     sa.Column('Classe', sa.String(length=255), nullable=True),
-    sa.Column('Nome', sa.String(length=255), nullable=True),
+    sa.Column('NomePoloPassivo', sa.String(length=255), nullable=True),
+    sa.Column('NomePoloAtivo', sa.String(length=255), nullable=True),
     sa.Column('Assunto', sa.String(length=255), nullable=True),
     sa.Column('Valor', sa.String(length=255), nullable=True),
     sa.Column('Serventia', sa.String(length=255), nullable=True),
