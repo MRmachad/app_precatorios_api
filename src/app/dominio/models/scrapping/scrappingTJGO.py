@@ -43,7 +43,13 @@ class scrappingTJGO(BaseScrapping):
             driver_chrome = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options) 
                          
         driver_chrome.set_page_load_timeout(30)
-        
+        #############
+        driver_chrome.get("https://projudi.tjgo.jus.br")
+        driver_chrome.find_element(By.NAME, "Usuario").send_keys("01093980176")
+        driver_chrome.find_element(By.NAME, "Senha").send_keys("Capfi@123")
+        driver_chrome.find_element(By.XPATH, "//form[@id='formLogin']//input[@type='submit' and @value='Entrar']").click()
+        link_Busca_Process = driver_chrome.find_element(By.XPATH, '//*[@id="1m1"]').get_attribute('href')
+        ##############
         size = 100
         search_after = None
 
@@ -92,7 +98,10 @@ class scrappingTJGO(BaseScrapping):
                     search_after =  processo["sort"]            
 
                     try:
-                        driver_chrome.get("https://projudi.tjgo.jus.br/BuscaProcesso") 
+                        ######################################
+                        driver_chrome.get(link_Busca_Process) 
+                        driver_chrome.find_element(By.XPATH, '//*[@id="fieldsetDadosProcesso"]/div[1]//button[@name = "imaLimparProcessoStatus"]').click()
+                        #####################################
                         driver_chrome.execute_script("window.Serventia = {};")                   
                         driver = driver_chrome
                     except:
@@ -107,15 +116,19 @@ class scrappingTJGO(BaseScrapping):
                             continue
 
                         nome = driver.find_elements(By.XPATH, '//span[@class="span1 nomes"]')
-                        nomeAtivo : [] = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[text()='Nome']/following-sibling::span")
-                        nomePassivo= driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[text()='Nome']/following-sibling::span")
+                        #############################################################################
+                        nomeAtivo = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[text()='Nome']/following-sibling::span[contains(@class, 'span1 nomes')]")
+                        CpfCNPJ_NomePoloAtivo = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[contains(text(), 'CPF/CNPJ')]/following-sibling::span[@class='span2']")
+                        nomePassivo= driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[text()='Nome']/following-sibling::span[contains(@class, 'span1 nomes')]")
+                        CpfCNPJ_PoloPassivo = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[contains(text(), 'CPF/CNPJ')]/following-sibling::span[@class='span2']")               
+                        ###############################################################################
                         valorCausa = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[4]')
                         movimentacao = driver.find_elements(By.CLASS_NAME, "filtro_coluna_movimentacao")
                         assunto = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[3]/table/tbody/tr/td')
                         serventia = driver.find_elements(By.XPATH, '/html/body/div[4]/form/div[1]/fieldset/fieldset/fieldset[3]/span[1]')
 
                         for item in movimentacao:
-                            if ("precatório" in item.text.lower()) or ("proad" in item.text.lower()) or ("depre" in item.text.lower()):
+                            if ("precatório" in item.text.lower()):
                                 ePrecatorio = True
                                 break 
 
@@ -126,14 +139,17 @@ class scrappingTJGO(BaseScrapping):
                             Classe= classe,
                             NumeroProcesso = numeroProcesso,
                             NumeroProcessoConsulta= processoCode,
-                            CpfCNPJNomePoloAtivo= '',
-                            CpfCNPJPoloPassivo='',
+                            CpfCNPJNomePoloAtivo= ",".join([x.text for x in CpfCNPJ_NomePoloAtivo]) if len(CpfCNPJ_NomePoloAtivo) > 0  else '',############################################
+                            CpfCNPJPoloPassivo= ",".join([x.text for x in CpfCNPJ_PoloPassivo]) if len(CpfCNPJ_PoloPassivo) > 0  else '',################################################
                             NomePoloAtivo= ", ".join([x.text for x in nomeAtivo]) if len(nomeAtivo) > 0  else '',
                             NomePoloPassivo= ", ".join([x.text for x in nomePassivo]) if len(nomePassivo) > 0  else '',
                             Assunto= assunto[0].text if len(assunto) > 0  else '',
                             Valor= valorCausa[0].text if len(valorCausa) > 0  else '',
-                            Serventia = serventia[0].text if len(serventia) > 0  else ''                
+                            Serventia = serventia[0].text if len(serventia) > 0  else '' 
+
                         )
+
+                                        
 
                         processo_criado : ProcessoMixin = await servicoDeProcesso.adicione(processo)
 
