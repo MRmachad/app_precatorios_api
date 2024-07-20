@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "connections": {
         "database": "mariadb+mariadbconnector://root:qwerty@db_app_precatorios:3306/precatorios",
-        "storage" : "DefaultEndpointsProtocol=https;AccountName=petinder;AccountKey=lMxqxcYnBc7DINlbR9s0Ee3TO0VKHK6UhB84LL4wKfyFriFAx7T0FrdGPN4xz5yJfPMQDjxXYc9Z+ASt1zJ1cA==;EndpointSuffix=core.windows.net",
+        "storage" : "DefaultEndpointsProtocol=https;AccountName=storageprecatorios;AccountKey=+7v/x+vQCel5F9rNefgUg2u9GweV+bh1h7Xc4gOVQJ2Jx3DAgegknaDD1v8KedFwfyBo+JuZIRjk+AStky0FQg==;EndpointSuffix=core.windows.net",
         "datajud":{
             "schema":"APIKey",
             "token":"cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw",
