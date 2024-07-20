@@ -28,7 +28,10 @@ class scrappingTJGO(BaseScrapping):
         
         self.servicoDeProcesso =  inject.instance(ServicoDeProcesso)
 
-        self.projudi_url = "https://projudi.tjgo.jus.br/BuscaProcesso"
+        self.size = 100
+        self.projudi_url = "https://projudi.tjgo.jus.br"
+        self.projudi_login = config.data["connections"]["projudi"]["login"]
+        self.projudi_senha = config.data["connections"]["projudi"]["senha"]
         self.token = config.data["connections"]["datajud"]["token"]
         self.tokenScheme = config.data["connections"]["datajud"]["schema"]
         self.baseAdress = config.data["connections"]["datajud"]["tribunais"]["tjgo"]
@@ -56,12 +59,12 @@ class scrappingTJGO(BaseScrapping):
                 return True
         return False
 
-    async def findAndInsert(self, baseAdress:str, body:dict[str, Any], headers:dict[str, str], driver:WebDriverChrome | WebDriverRemote):        
+    async def findAndInsert(self, body:dict[str, Any], headers:dict[str, str], driver:WebDriverChrome | WebDriverRemote):        
         
         search_after = None
 
         while True:
-            response = requests.post(f"{baseAdress}/_search", json=body, headers=headers)
+            response = requests.post(f"{self.baseAdress}/_search", json=body, headers=headers)
 
             if(response.ok and len(json.loads(response.text)["hits"]["hits"]) > 0):
                 for processo in json.loads(response.text)["hits"]["hits"]:
@@ -72,7 +75,8 @@ class scrappingTJGO(BaseScrapping):
 
                     search_after =  processo["sort"]            
 
-                    driver.get(self.projudi_url) 
+                    driver.get(f"{self.projudi_url}/BuscaProcesso") 
+                    driver.find_element(By.XPATH, '//*[@id="fieldsetDadosProcesso"]/div[1]//button[@name = "imaLimparProcessoStatus"]').click()
                     driver.execute_script("window.Serventia = {};")    
                 
                     try:
@@ -88,10 +92,13 @@ class scrappingTJGO(BaseScrapping):
                         valorCausa = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[4]')
                         movimentacao = driver.find_elements(By.CLASS_NAME, "filtro_coluna_movimentacao")
                         assunto = driver.find_elements(By.XPATH, '//*[@id="VisualizaDados"]/span[3]/table/tbody/tr/td')
-                        serventia = driver.find_elements(By.XPATH, '/html/body/div[4]/form/div[1]/fieldset/fieldset/fieldset[3]/span[1]')
-                        nomeAtivo = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[text()='Nome']/following-sibling::span")
-                        nomePassivo= driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[text()='Nome']/following-sibling::span")
+                        serventia = driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Serventia')]/following::span[@class='span1'])[1]")
 
+                        nomeAtivo = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[text()='Nome']/following-sibling::span[contains(@class, 'span1 nomes')]")
+                        CpfCNPJ_NomePoloAtivo = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[contains(text(), 'CPF/CNPJ')]/following-sibling::span[@class='span2']")
+                        nomePassivo= driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[text()='Nome']/following-sibling::span[contains(@class, 'span1 nomes')]")
+                        CpfCNPJ_PoloPassivo = driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[contains(text(), 'CPF/CNPJ')]/following-sibling::span[@class='span2']")    
+                        
                         for item in movimentacao:
                             if (self.verifica_filtros_movimento(item.text)):
                                 ePrecatorio = True
@@ -102,8 +109,8 @@ class scrappingTJGO(BaseScrapping):
                                 Classe= classe,
                                 NumeroProcesso = numeroProcesso,
                                 NumeroProcessoConsulta= processoCode,
-                                CpfCNPJNomePoloAtivo= '',
-                                CpfCNPJPoloPassivo='',
+                                CpfCNPJNomePoloAtivo= ",".join([x.text for x in CpfCNPJ_NomePoloAtivo]) if len(CpfCNPJ_NomePoloAtivo) > 0 else '',
+                                CpfCNPJPoloPassivo= ",".join([x.text for x in CpfCNPJ_PoloPassivo]) if len(CpfCNPJ_PoloPassivo) > 0 else '',
                                 NomePoloAtivo= ", ".join([x.text for x in nomeAtivo]) if len(nomeAtivo) > 0  else '',
                                 NomePoloPassivo= ", ".join([x.text for x in nomePassivo]) if len(nomePassivo) > 0  else '',
                                 Assunto= assunto[0].text if len(assunto) > 0  else '',
@@ -153,9 +160,13 @@ class scrappingTJGO(BaseScrapping):
             else:
                 driver_chrome = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options) 
                             
-            driver_chrome.set_page_load_timeout(30)
-            
-            size = 2
+            driver_chrome.set_page_load_timeout(30)        
+
+            driver_chrome.get(self.projudi_url)
+            driver_chrome.find_element(By.NAME, "Usuario").send_keys(self.projudi_login)
+            driver_chrome.find_element(By.NAME, "Senha").send_keys(self.projudi_senha)
+            driver_chrome.find_element(By.XPATH, "//form[@id='formLogin']//input[@type='submit' and @value='Entrar']").click()
+            link_Busca_Process = driver_chrome.find_element(By.XPATH, '//*[@id="1m1"]').get_attribute('href')
 
             headers = {
                 "Authorization": f"{self.tokenScheme} {self.token}",
@@ -163,7 +174,7 @@ class scrappingTJGO(BaseScrapping):
             }
 
             body = {
-                "size": size,                
+                "size": self.size,                
                 "sort": [
                     {
                         "@timestamp": {
@@ -173,7 +184,7 @@ class scrappingTJGO(BaseScrapping):
                 ]
             }
             
-            await self.findAndInsert(baseAdress=self.baseAdress,body=body,headers=headers,driver=driver_chrome)
+            await self.findAndInsert(body=body,headers=headers,driver=driver_chrome)
 
         except Exception as e:
             print(f"Erro no worker{e}")  
