@@ -153,14 +153,13 @@ class ServicoBase(ServicoBaseCore):
         id_: str | UUID,
         column: str = "uuid",
     ) -> SnippetModel:
-        db_model = await self.obtenha_um_por_id(
-            self.unidadeDeTrabalho, id_, column=column, with_for_update=True
-        )
+        db_model = await self.obtenha_um_por_id(id_, column=column, with_for_update=True)
         if not db_model:
             raise NotFoundException(
                 f"{self.model.__tablename__} {column}={id_} not found.",
             )
 
+        print(f"dbmobel \n {db_model}")
         values = data.model_dump(exclude_unset=True)
         for k, v in values.items():
             setattr(db_model, k, v)
