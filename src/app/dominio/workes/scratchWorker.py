@@ -11,11 +11,16 @@ from src.core.worker.workerCron import WorkerCron
 
 class ScratchWorker(WorkerCron):
     def __init__(self) -> None:
-        super().__init__(12,True)
+        super().__init__(14, 22,55,True)
 
     async def job(self) -> Any:
         import_submodules( "src.app.dominio.models.scrapping")
         for subclass in get_subclasses(BaseScrapping):
             if inspect.isclass(subclass) and not inspect.isabstract(subclass):
-                await subclass.work(self)
+                try:
+                    instance = subclass() 
+                    await instance.work()
+                except Exception as e:
+                    print(f"Erro no worker{e}")  
+                    pass
         

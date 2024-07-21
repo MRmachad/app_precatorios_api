@@ -10,6 +10,10 @@
             "tribunais":{
                 "tjgo":"https://api-publica.datajud.cnj.jus.br/api_publica_tjgo"
             }
+        },
+        "projudi":{
+            "login":"01093980176",
+            "senha":"Capfi@123"
         }
     },
     "hub_selenium": "http://hub_selenium:4444/wd/hub",

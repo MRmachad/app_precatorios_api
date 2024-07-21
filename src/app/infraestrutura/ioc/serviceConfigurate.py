@@ -11,5 +11,5 @@ def ioc_config_service(binder:inject.Binder):
     
     session = Session()
     binder.bind(ServicoDeStorage, ServicoDeStorageAzure())
-    binder.bind(ServicoDeProcesso, ServicoBase(ProcessoMixin, session))
+    binder.bind(ServicoDeProcesso, ServicoDeProcesso(session))
     pass

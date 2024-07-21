@@ -7,6 +7,7 @@ from src.core.worker.workerInterval import WorkerInterval
 
 
 async def register_worker():
+
     import_submodules("src.app.dominio.workes")
     for subclass in get_subclasses(WorkerCron):
         if inspect.isclass(subclass) and not inspect.isabstract(subclass):
