@@ -76,10 +76,23 @@ class scrappingTJGO(BaseScrapping):
                     search_after =  processo["sort"]            
 
                     driver.get(f"{self.projudi_url}/BuscaProcesso") 
-                    driver.find_element(By.XPATH, '//*[@id="fieldsetDadosProcesso"]/div[1]//button[@name = "imaLimparProcessoStatus"]').click()
+                    
                     driver.execute_script("window.Serventia = {};")    
-                
+                    
+                    
                     try:
+                        try:
+                            driver.find_element(By.XPATH, '//*[@id="fieldsetDadosProcesso"]/div[1]//button[@name = "imaLimparProcessoStatus"]').click()
+                        except:
+                            print("passou aqui 2")
+                            driver.back()
+                            driver.set_page_load_timeout(30) 
+                            driver.get(self.projudi_url)
+                            driver.find_element(By.NAME, "Usuario").send_keys(self.projudi_login)
+                            driver.find_element(By.NAME, "Senha").send_keys(self.projudi_senha)
+                            driver.find_element(By.XPATH, "//form[@id='formLogin']//input[@type='submit' and @value='Entrar']").click()
+                            driver.set_page_load_timeout(30)
+                            pass
                         driver.find_element(By.NAME, "ProcessoNumero").clear()
                         driver.find_element(By.NAME, "ProcessoNumero").send_keys(processoCode + Keys.RETURN)
                         driver.find_element(By.NAME, "imgSubmeter").click()
@@ -125,9 +138,21 @@ class scrappingTJGO(BaseScrapping):
 
                     except Exception as e:
                         print(f"Erro ao obter informações: {e}")
+                        
+                        print(f"O numero do processo é: {processoCode}")
+                        if "404" in driver.title:
+                            print("passou aqui")
+                            driver.back()
+                            driver.set_page_load_timeout(30) 
+                            driver.get(self.projudi_url)
+                            driver.find_element(By.NAME, "Usuario").send_keys(self.projudi_login)
+                            driver.find_element(By.NAME, "Senha").send_keys(self.projudi_senha)
+                            driver.find_element(By.XPATH, "//form[@id='formLogin']//input[@type='submit' and @value='Entrar']").click()
+                            break
                         pass
                     finally:
                         driver.back()
+                    
             else:
                 break
             
@@ -150,7 +175,7 @@ class scrappingTJGO(BaseScrapping):
             user_agent = random.choice(user_agents)
             
             chrome_options = Options()
-            chrome_options.add_argument("--headless")
+            #chrome_options.add_argument("--headless")
             chrome_options.add_argument(f"user-agent={user_agent}")
             chrome_options.add_argument("--disable-blink-features=AutomationOrigin")
             chrome_options.add_argument("--disable-blink-features=AutomationControlled")
