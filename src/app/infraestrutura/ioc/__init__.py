@@ -1,5 +1,6 @@
 
 import asyncio
+import logging
 import inject
 from src.app.infraestrutura.ioc.dbConfigurate import ioc_config_db
 from src.app.infraestrutura.ioc.workerConfigurate import register_worker
