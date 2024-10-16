@@ -122,7 +122,6 @@ class ServicoBase(ServicoBaseCore):
         if with_for_update:
             q = q.with_for_update()
         
-        print(q)
         rows = await self.unidadeDeTrabalho.execute(q)
         return rows.unique().scalars().all()
     

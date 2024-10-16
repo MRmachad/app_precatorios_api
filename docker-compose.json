@@ -33,7 +33,7 @@
       "ports": [
         "4444:4444"
       ],
-      "shm_size": "500mb"
+      "shm_size": "256mb"
     },
     "chrome-node-processo": {
       "restart": "unless-stopped",
@@ -51,7 +51,7 @@
       "ports": [
         "5900:5900"
       ],
-      "shm_size": "500mb"
+      "shm_size": "526mb"
     },
     "chrome-node-meta": {
       "restart": "unless-stopped",
@@ -69,13 +69,12 @@
       "ports": [
         "5901:5900"
       ],
-      "shm_size": "500mb"
+      "shm_size": "526mb"
     },
     "app_precatorios": {
       "restart": "unless-stopped",
       "container_name": "app_precatorios",
       "build": ".",
-      "shm_size": "500mb",
       "depends_on": {
         "db_app_precatorios": {
           "condition": "service_healthy"
@@ -86,7 +85,8 @@
       },
       "ports": [
         "5098:80"
-      ]
+      ],
+      "shm_size": "256mb"
     }
   }
 }

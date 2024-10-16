@@ -55,7 +55,7 @@ class ServicoDeMetaProcesso(ServicoBase):
         offset = (page - 1) * page_size
 
         # Consulta com paginação usando limite e offset
-        stmt = select(self.model).order_by(desc(self.model.DataPublicacao)).offset(offset).limit(page_size)
+        stmt = select(self.model).order_by(self.model.DataPublicacao).offset(offset).limit(page_size)
 
         # Executando a consulta de forma assíncrona
         result = await self.unidadeDeTrabalho.execute(stmt)

@@ -48,6 +48,9 @@ class metaScrappingTJGO(BaseScrapping):
             chrome_options.add_argument('--disable-gpu')
             chrome_options.add_argument("--disable-images")
             chrome_options.add_argument("--no-sandbox")
+            chrome_options.add_argument("enable-automation")
+            chrome_options.add_argument("--disable-extensions")
+            chrome_options.add_argument("--dns-prefetch-disable")
             chrome_options.add_argument("--disable-dev-shm-usage")
             chrome_options.add_argument(f"user-agent={user_agent}")
             chrome_options.add_argument("--disable-blink-features=AutomationOrigin")
@@ -128,7 +131,7 @@ class metaScrappingTJGO(BaseScrapping):
                 finally:
                     current_date += relativedelta(days=1)
         except Exception as e:
-            print(f"Erro no worker{e}")  
+            print(f"Erro no worker metaScrappingTJGO {e}")  
             pass
         
         
