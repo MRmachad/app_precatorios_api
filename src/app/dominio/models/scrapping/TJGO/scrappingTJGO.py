@@ -1,5 +1,7 @@
+from concurrent.futures import thread
 import json
 import random
+import time
 from typing import Any
 
 import inject
@@ -85,6 +87,8 @@ class scrappingTJGO(BaseScrapping):
 
     async def work(self) -> Any:
         try:       
+            time.sleep(15)
+
             user_agents = [
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -121,14 +125,18 @@ class scrappingTJGO(BaseScrapping):
             driver.find_element(By.XPATH, "//form[@id='formLogin']//input[@type='submit' and @value='Entrar']").click()
             page = 1 
             page_size = 100
+            ultima_pub_detalhe = await self.servicoDeProcesso.obtenha_ultima_data_publicacao()
             while True:
-                meta_processos: list[MetaProcesso] = await self.servicoDeMetaProcesso.obtenha_muitos_pag(page=page, page_size=page_size)
-                await self.findAndInsert(metaProcessos=meta_processos, driver=driver)
+                meta_processos: list[MetaProcesso] = await self.servicoDeMetaProcesso.obtenha_muitos_pag(page=page, page_size=page_size, from_date=ultima_pub_detalhe)
+                if(meta_processos is not None and meta_processos.count() > 0):
+                    await self.findAndInsert(metaProcessos=meta_processos, driver=driver)
 
-                if len(meta_processos) < page_size:
+                    if len(meta_processos) < page_size:
+                        break
+
+                    page += 1
+                else:
                     break
-
-                page += 1
 
         except Exception as e:
             print(f"Erro no worker scrappingTJGO {e}")  

@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from datetime import datetime
+from sqlalchemy import desc, select
+from src.app.dominio.models.dadosTribunais.metaProcesso import MetaProcessoMixin
 from src.app.dominio.models.dadosTribunais.processo import ProcessoMixin
 from src.core.repositorio.servicoBase import ServicoBase, SnippetException
 from src.core.repositorio.session import Session
@@ -26,3 +28,16 @@ class ServicoDeProcesso(ServicoBase):
 
         results = await self.unidadeDeTrabalho.execute(q)
         return results.unique().scalar_one_or_none()
+    
+    async def obtenha_ultima_data_publicacao(self) -> datetime | None:
+
+        stmt = (
+        select(MetaProcessoMixin.DataPublicacao)
+        .join(self.model.meta_processo)  
+        .order_by(desc(MetaProcessoMixin.DataPublicacao))  
+        .limit(1)  
+    )
+
+        result = await self.unidadeDeTrabalho.execute(stmt)
+
+        return result.scalars().first()

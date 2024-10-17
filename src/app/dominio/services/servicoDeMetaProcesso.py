@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from sqlalchemy import desc, select
 from src.app.dominio.basicos.Enumeradores.enumeradorTipoProcesso import TipoDeProcesso
@@ -50,17 +51,22 @@ class ServicoDeMetaProcesso(ServicoBase):
             await self.unidadeDeTrabalho.revertaTrasacao()
             raise SnippetException(f"Unknown error occurred: {e}") from e
         
-    async def obtenha_muitos_pag(self, page: int = 1, page_size: int = 10) -> List[MetaProcesso]:
-        # Cálculo do offset com base na página atual
+    async def obtenha_muitos_pag(self, page: int = 1, page_size: int = 10, from_date : datetime = None ) -> List[MetaProcesso]:
         offset = (page - 1) * page_size
 
-        # Consulta com paginação usando limite e offset
-        stmt = select(self.model).order_by(self.model.DataPublicacao).offset(offset).limit(page_size)
+        stmt = select(self.model).order_by(self.model.DataPublicacao)
+        if from_date is not None:
+            stmt.filter(self.model.DataPublicacao > from_date)
+        result = await self.unidadeDeTrabalho.execute(stmt.offset(offset).limit(page_size))
 
-        # Executando a consulta de forma assíncrona
-        result = await self.unidadeDeTrabalho.execute(stmt)
-
-        # Convertendo os resultados para uma lista de MetaProcesso
         meta_processos = result.scalars().all()
 
         return meta_processos
+    
+    async def obtenha_ultima_data_publicacao(self) -> datetime | None:
+
+        stmt = select(self.model.DataPublicacao).order_by(desc(self.model.DataPublicacao)).limit(1)
+
+        result = await self.unidadeDeTrabalho.execute(stmt)
+
+        return result.scalars().first()

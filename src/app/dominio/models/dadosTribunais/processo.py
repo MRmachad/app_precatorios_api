@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.repositorio.baseModel import Base, TimestampMixin, TimestampMixinSchema, UuidMixin, UuidMixinSchema
 
 """Mixin é classe de abstração do SQLAlchemy que mapeia a entidade no banco"""
@@ -19,6 +19,10 @@ class ProcessoMixin(Base, UuidMixin, TimestampMixin):
     Valor: Mapped[str] = mapped_column(String(255),nullable=True)
     Serventia: Mapped[str] = mapped_column(String(255),nullable=True)
     Serventia2: Mapped[str] = mapped_column(String(255),nullable=True)
+
+    meta_processo_id: Mapped[str] = mapped_column(ForeignKey('metaProcesso.uuid'))
+
+    meta_processo: Mapped['MetaProcessoMixin'] = relationship("MetaProcessoMixin")
     
 """BaseModel é uma abstração para validação e tornar a estrutura apta a trabalhar com orm"""
 class ProcessoSchemma(BaseModel):
