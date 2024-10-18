@@ -1,6 +1,7 @@
 import random
 import re
 import time
+import traceback
 from typing import Any, List
 
 import inject
@@ -25,6 +26,7 @@ from src.app.dominio.basicos.Enumeradores.enumeradorTipoProcesso import TipoDePr
 from selenium.webdriver.remote.webdriver import WebDriver as WebDriverRemote
 from selenium.webdriver.chrome.webdriver import WebDriver as WebDriverChrome
 from config import config
+from src.core.util.gerenciadorDeLog import log_error
 
 class metaScrappingTJGO(BaseScrapping):
 
@@ -50,7 +52,7 @@ class metaScrappingTJGO(BaseScrapping):
 
             campo_pagina = driver.find_elements(By.XPATH, '//*[@id="CaixaTextoPosicionar"]')
 
-            if(campo_pagina.count() > 0):
+            if(len(campo_pagina) > 0):
                 return data_ultima_pub + relativedelta(days=1)
             else:
                 return None
@@ -70,6 +72,7 @@ class metaScrappingTJGO(BaseScrapping):
             
             chrome_options = Options()
             chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--window-size=1920,1080")
             chrome_options.add_argument('--disable-gpu')
             chrome_options.add_argument("--disable-images")
             chrome_options.add_argument("--no-sandbox")
@@ -87,79 +90,90 @@ class metaScrappingTJGO(BaseScrapping):
                 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options) 
                             
             driver.implicitly_wait(10)   
-            driver.set_page_load_timeout(30)  
+            driver.set_page_load_timeout(60)  
 
             end_date = datetime.now()
             start_date = await self.obtenha_inicio_paginacao(driver)
 
+            print(f"data inicial meta consulta => {start_date.strftime("%d/%m/%Y")} ", flush=True)
+            
             if(start_date != None):
                 current_date = start_date
                 while current_date <= end_date:
                     try:
                         _metaProcessos : List[MetaProcessoSchemma]= []
-                        stop_date = current_date + relativedelta(months=1)
+                        stop_date = current_date + relativedelta(days=1)
 
                         driver.get(f"{self.projudi_url}/ConsultaPublicacao") 
 
                         driver.find_element(By.ID, "Texto").send_keys("Expeça-se Precatório OU precatório")
-
                         driver.find_element(By.ID, "DataFinal").send_keys(stop_date.strftime("%d/%m/%Y"))
                         driver.find_element(By.ID, "DataInicial").send_keys(current_date.strftime("%d/%m/%Y"))
 
                         driver.find_element(By.NAME, "Localizar").click()
 
-                        campo_pagina = driver.find_elements(By.XPATH, '//*[@id="CaixaTextoPosicionar"]')
+                        try:
+                            campo_pagina = driver.find_element(By.XPATH, '//*[@id="CaixaTextoPosicionar"]')                     
+                            valor_pagina = campo_pagina.get_attribute("value")   
+                        except: 
+                            continue
                         
-                        if(campo_pagina.count() > 0): 
+                        for pagina in range(1, int(valor_pagina) + 1):
+                            try:                                  
+                                campo_pagina = driver.find_element(By.XPATH, '//*[@id="CaixaTextoPosicionar"]')                              
+                                campo_pagina.clear()  
+                                campo_pagina.send_keys(str(pagina))  
 
-                            valor_pagina = campo_pagina[0].get_attribute("value")   
-
-                            for pagina in range(1, int(valor_pagina) + 1):
                                 try:
-                                    campo_pagina[0].clear()  
-                                    campo_pagina[0].send_keys(str(pagina))  
+                                    botao_ir = driver.find_element(By.XPATH, '//*[@value="Ir"]')
+                                    botao_ir.click()      
+                                    
+                                    numeroProcesso = driver.find_elements(By.XPATH, "//*[@id='formLocalizar']//h4[contains(text(), '-') or contains(text(), '.')]")
+                                    dataPublicacao = driver.find_elements(By.XPATH, "//*[@id='formLocalizar']//div[@class='search-result']/p/b/i[contains(text(), 'Publicado')]")                      
+                                except Exception as e:                                    
+                                    log_error(e)
+                                    print(f"Erro ao clica em botão ir {pagina}")   
 
+                                    driver.refresh() 
+                                    time.sleep(3) 
                                     try:
+                                        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="CaixaTextoPosicionar"]')))
+                                        
+                                        campo_pagina = driver.find_element(By.XPATH, '//*[@id="CaixaTextoPosicionar"]')
+                                        campo_pagina.clear()  
+                                        campo_pagina.send_keys(str(pagina))  
                                         botao_ir = driver.find_element(By.XPATH, '//*[@value="Ir"]')
-                                        botao_ir.click()      
+                                        botao_ir.click()
                                         
                                         numeroProcesso = driver.find_elements(By.XPATH, "//*[@id='formLocalizar']//h4[contains(text(), '-') or contains(text(), '.')]")
-                                        dataPublicacao = driver.find_elements(By.XPATH, "//*[@id='formLocalizar']//div[@class='search-result']/p/b/i[contains(text(), 'Publicado')]")                      
-                                    except Exception as e:
-                                        driver.refresh()  
-                                        try:
-                                            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="CaixaTextoPosicionar"]')))
-                                            campo_pagina[0].clear()  
-                                            campo_pagina[0].send_keys(str(pagina))  
-                                            botao_ir = driver.find_element(By.XPATH, '//*[@value="Ir"]')
-                                            botao_ir.click()
-                                            
-                                            numeroProcesso = driver.find_elements(By.XPATH, "//*[@id='formLocalizar']//h4[contains(text(), '-') or contains(text(), '.')]")
-                                            dataPublicacao = driver.find_elements(By.XPATH, "//*[@id='formLocalizar']//div[@class='search-result']/p/b/i[contains(text(), 'Publicado')]")   
-                                        except Exception as e:
-                                            print(f"Erro após refresh na página {pagina}: {e}")                                   
+                                        dataPublicacao = driver.find_elements(By.XPATH, "//*[@id='formLocalizar']//div[@class='search-result']/p/b/i[contains(text(), 'Publicado')]")   
+                                    except Exception as e:                                   
+                                        log_error(e)
+                                        print(f"Erro após refresh na página {pagina}")     
+                                        continue                              
 
-                                    metaProcesso : MetaProcessoSchemma = MetaProcessoSchemma(
-                                        NumeroProcesso=numeroProcesso[0].text,         
-                                        NumeroProcessoConsulta=  re.search(r'\d{7}[-.]\d{2}', numeroProcesso[0].text).group().replace(".","-"),
-                                        DataPublicacao=datetime.strptime(dataPublicacao[0].text.split('Publicado em ')[1], '%d/%m/%Y %H:%M:%S')
-                                    )
-                                    metaProcesso.add_tipo(TipoDeProcesso.PRECATORIO)
+                                metaProcesso : MetaProcessoSchemma = MetaProcessoSchemma(
+                                    NumeroProcesso=numeroProcesso[0].text,         
+                                    NumeroProcessoConsulta=  re.search(r'\d{7}[-.]\d{2}', numeroProcesso[0].text).group().replace(".","-"),
+                                    DataPublicacao=datetime.strptime(dataPublicacao[0].text.split('Publicado em ')[1], '%d/%m/%Y %H:%M:%S')
+                                )
+                                metaProcesso.add_tipo(TipoDeProcesso.PRECATORIO)
 
-                                    _metaProcessos.append(metaProcesso)
-                                except Exception as e:
-                                    print(f"Erro na página {pagina}: {e}")
-                                    pass
+                                _metaProcessos.append(metaProcesso)
+                            except Exception as e:
+                                log_error(e)
+                                print(f"Erro após refresh na página {pagina}")        
 
-                            await self.servicoDeMetaProcesso.adicioneTodosCasoNaoExista(_metaProcessos)
-                    except Exception as e:
-                        print(f"Erro na paginação de metaProcesso {e}")  
-                        pass
+                        await self.servicoDeMetaProcesso.adicioneTodosCasoNaoExista(_metaProcessos)
+                    except Exception as e:   
+                        log_error(e)
+                        print(f"Erro no ciclo de paginação do worker metaScrappingTJGO")   
                     finally:
-                        current_date += relativedelta(months=1)
-        except Exception as e:
-            print(f"Erro no worker metaScrappingTJGO {e}")  
-            pass
+                        current_date += relativedelta(days=1)
+        except Exception as e:                                     
+            log_error(e)
+            print(f"Erro geral no worker metaScrappingTJGO")  
+            
         
         
          

@@ -6,6 +6,7 @@ from src.app.dominio.models.dadosTribunais.metaProcesso import MetaProcesso, Met
 from src.app.dominio.models.dadosTribunais.processo import ProcessoMixin
 from src.core.repositorio.servicoBase import ServicoBase, SnippetException
 from src.core.repositorio.session import Session
+from src.core.util.gerenciadorDeLog import log_error
 
 class ServicoDeMetaProcesso(ServicoBase):
 
@@ -41,14 +42,23 @@ class ServicoDeMetaProcesso(ServicoBase):
 
             consulta = select(self.model).where(MetaProcessoMixin.NumeroProcesso.in_(numeros_de_processos))
             resultados = await self.unidadeDeTrabalho.execute(consulta)
-            processos_existentes = {row.NumeroProcesso for row in resultados}
-            processos_para_inserir = [processo for processo in data if processo.NumeroProcesso not in processos_existentes]
 
-            if processos_para_inserir:
-                await self.adicione_muitos(processos_para_inserir)
+            todos_resultados = resultados.all()
+
+            if not todos_resultados:              
+                await self.adicione_muitos(data)
+            else:
+                for row in todos_resultados:
+                    print(row)
+                processos_existentes = {row[0].NumeroProcesso for row in todos_resultados}
+                processos_para_inserir = [processo for processo in data if processo.NumeroProcesso not in processos_existentes]
+
+                if processos_para_inserir:
+                    await self.adicione_muitos(processos_para_inserir)
 
         except Exception as e:
             await self.unidadeDeTrabalho.revertaTrasacao()
+            log_error(e)
             raise SnippetException(f"Unknown error occurred: {e}") from e
         
     async def obtenha_muitos_pag(self, page: int = 1, page_size: int = 10, from_date : datetime = None ) -> List[MetaProcesso]:

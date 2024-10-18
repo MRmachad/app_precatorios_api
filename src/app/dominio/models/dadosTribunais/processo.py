@@ -36,6 +36,7 @@ class ProcessoSchemma(BaseModel):
         Assunto : str
         Valor : str
         Serventia : str
+        meta_processo_id : str
         
 class Processo(ProcessoSchemma, UuidMixinSchema, TimestampMixinSchema):
         NumeroProcesso : str
@@ -48,3 +49,4 @@ class Processo(ProcessoSchemma, UuidMixinSchema, TimestampMixinSchema):
         Assunto : str
         Valor : str
         Serventia : str
+        meta_processo_id : str
