@@ -89,25 +89,25 @@ class metaScrappingTJGO(BaseScrapping):
             if(config.ehProd):
                 driver = webdriver.Remote(config.data["hub_selenium"], options=chrome_options)
             else:
-                driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options) 
-                            
+                driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)             
+            
+            print(f"meta scrapping session => {driver.session_id }", flush=True)           
+
             driver.implicitly_wait(10)   
             driver.set_page_load_timeout(60)  
 
             end_date = datetime.now()
             start_date = await self.obtenha_inicio_paginacao(driver)
-
-            print(f"data inicial meta consulta => {start_date.strftime("%d/%m/%Y")} ", flush=True)
             
             if(start_date != None):
-                current_date = start_date if metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA is None else metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA + relativedelta(days=7)
+                current_date = start_date if metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA is None else metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA + relativedelta(days=1)
                 metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA = current_date
                 while current_date <= end_date:
-                    try:
-                        
-                        print(f"data corrente meta consulta => {current_date.strftime("%d/%m/%Y")} ", flush=True)
+                    try:                        
                         _metaProcessos : List[MetaProcessoSchemma]= []
-                        stop_date = current_date + relativedelta(days=7)
+                        stop_date = current_date
+
+                        print(f"data corrente meta consulta => {current_date.strftime("%d/%m/%Y")}  => {stop_date.strftime("%d/%m/%Y")}", flush=True)
 
                         driver.get(f"{self.projudi_url}/ConsultaPublicacao") 
 
@@ -133,8 +133,8 @@ class metaScrappingTJGO(BaseScrapping):
                                     botao_ir = driver.find_element(By.XPATH, '//*[@value="Ir"]')
                                     botao_ir.click()      
                                     
-                                    numeroProcesso = driver.find_elements(By.XPATH, "//*[@id='formLocalizar']//h4[contains(text(), '-') or contains(text(), '.')]")
-                                    dataPublicacao = driver.find_elements(By.XPATH, "//*[@id='formLocalizar']//div[@class='search-result']/p/b/i[contains(text(), 'Publicado')]")                      
+                                    numeroProcesso = driver.find_element(By.XPATH, "//*[@id='formLocalizar']//h4[contains(text(), '-') or contains(text(), '.')]")
+                                    dataPublicacao = driver.find_element(By.XPATH, "//*[@id='formLocalizar']//div[@class='search-result']/p/b/i[contains(text(), 'Publicado')]")                      
                                 except Exception as e:                                    
                                     log_error(e)
                                     print(f"Erro ao clica em botão ir {pagina}")   
@@ -150,17 +150,17 @@ class metaScrappingTJGO(BaseScrapping):
                                         botao_ir = driver.find_element(By.XPATH, '//*[@value="Ir"]')
                                         botao_ir.click()
                                         
-                                        numeroProcesso = driver.find_elements(By.XPATH, "//*[@id='formLocalizar']//h4[contains(text(), '-') or contains(text(), '.')]")
-                                        dataPublicacao = driver.find_elements(By.XPATH, "//*[@id='formLocalizar']//div[@class='search-result']/p/b/i[contains(text(), 'Publicado')]")   
+                                        numeroProcesso = driver.find_element(By.XPATH, "//*[@id='formLocalizar']//h4[contains(text(), '-') or contains(text(), '.')]")
+                                        dataPublicacao = driver.find_element(By.XPATH, "//*[@id='formLocalizar']//div[@class='search-result']/p/b/i[contains(text(), 'Publicado')]")   
                                     except Exception as e:                                   
                                         log_error(e)
                                         print(f"Erro após refresh na página {pagina}")     
                                         continue                              
 
                                 metaProcesso : MetaProcessoSchemma = MetaProcessoSchemma(
-                                    NumeroProcesso=numeroProcesso[0].text,         
-                                    NumeroProcessoConsulta=  re.search(r'\d{7}[-.]\d{2}', numeroProcesso[0].text).group().replace(".","-"),
-                                    DataPublicacao=datetime.strptime(dataPublicacao[0].text.split('Publicado em ')[1], '%d/%m/%Y %H:%M:%S')
+                                    NumeroProcesso=numeroProcesso.text,         
+                                    NumeroProcessoConsulta=  re.search(r'\d{7}[-.]\d{2}', numeroProcesso.text).group().replace(".","-"),
+                                    DataPublicacao=datetime.strptime(dataPublicacao.text.split('Publicado em ')[1], '%d/%m/%Y %H:%M:%S')
                                 )
                                 metaProcesso.add_tipo(TipoDeProcesso.PRECATORIO)
 
@@ -168,16 +168,16 @@ class metaScrappingTJGO(BaseScrapping):
                             except Exception as e:
                                 log_error(e)
                                 print(f"Erro após refresh na página {pagina}")        
-
-                        await self.servicoDeMetaProcesso.adicioneTodosCasoNaoExista(_metaProcessos)
+                        if _metaProcessos:
+                            await self.servicoDeMetaProcesso.adicioneTodosCasoNaoExista(_metaProcessos)
                     except Exception as e:   
                         log_error(e)
                         print(f"Erro no ciclo de paginação do worker metaScrappingTJGO")   
                     finally:
                         if(metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA > current_date):
-                            current_date = metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA + relativedelta(days=7)
+                            current_date = metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA + relativedelta(days=1)
                         else:
-                            current_date += relativedelta(days=7)
+                            current_date += relativedelta(days=1)
 
                         metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA = current_date
 

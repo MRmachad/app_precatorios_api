@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import desc, select
+from sqlalchemy import and_, desc, select
 from src.app.dominio.models.dadosTribunais.metaProcesso import MetaProcessoMixin
 from src.app.dominio.models.dadosTribunais.processo import ProcessoMixin, ProcessoSchemma
 from src.core.repositorio.servicoBase import ServicoBase, SnippetException
@@ -45,15 +45,14 @@ class ServicoDeProcesso(ServicoBase):
         results = await self.unidadeDeTrabalho.execute(q)
         return results.unique().scalar_one_or_none()
     
-    async def obtenha_data_primeiro_inexistente(self) -> MetaProcessoMixin | None:
-        stmt = (
-                select(MetaProcessoMixin)
-                .outerjoin(ProcessoMixin, MetaProcessoMixin.uuid == ProcessoMixin.meta_processo_id)
-                .where(ProcessoMixin.meta_processo_id == None)  # Filtrar onde não há vinculação
-                .order_by(MetaProcessoMixin.created_at)  # Ordenar pela data (crescente)
-                .limit(1)  # Limitar para obter o primeiro resultado
-            )
+    async def obtenha_data_primeiro_inexistente(self, execto : list[str] | None = None) -> MetaProcessoMixin | None:
+        stmt = select(MetaProcessoMixin).outerjoin(ProcessoMixin, MetaProcessoMixin.uuid == ProcessoMixin.meta_processo_id)
 
-        result = await self.unidadeDeTrabalho.execute(stmt)
+        if execto:
+            stmt = stmt.where(and_(ProcessoMixin.meta_processo_id == None, MetaProcessoMixin.NumeroProcesso.not_in(execto)))
+        else:
+            stmt = stmt.where(ProcessoMixin.meta_processo_id == None) 
+            
+        result = await self.unidadeDeTrabalho.execute(stmt.order_by(MetaProcessoMixin.created_at).limit(1))
 
         return result.scalars().first()
