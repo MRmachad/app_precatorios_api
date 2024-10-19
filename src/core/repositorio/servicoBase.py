@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 import inject
@@ -163,6 +164,8 @@ class ServicoBase(ServicoBaseCore):
         for k, v in values.items():
             setattr(db_model, k, v)
 
+        db_model.updated_at = datetime.now()
+        
         try:
             await self.unidadeDeTrabalho.salveAlteracoes()
             await self.unidadeDeTrabalho.atualizeModel(db_model)

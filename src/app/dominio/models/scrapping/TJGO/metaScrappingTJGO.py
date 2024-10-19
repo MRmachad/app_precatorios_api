@@ -30,6 +30,8 @@ from src.core.util.gerenciadorDeLog import log_error
 
 class metaScrappingTJGO(BaseScrapping):
 
+    DATA_INICIO_ULTIMA_VARREDURA : datetime | None = None
+
     def __init__(self) -> None:
 
         super().__init__()    
@@ -98,11 +100,14 @@ class metaScrappingTJGO(BaseScrapping):
             print(f"data inicial meta consulta => {start_date.strftime("%d/%m/%Y")} ", flush=True)
             
             if(start_date != None):
-                current_date = start_date
+                current_date = start_date if metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA is None else metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA + relativedelta(days=7)
+                metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA = current_date
                 while current_date <= end_date:
                     try:
+                        
+                        print(f"data corrente meta consulta => {current_date.strftime("%d/%m/%Y")} ", flush=True)
                         _metaProcessos : List[MetaProcessoSchemma]= []
-                        stop_date = current_date + relativedelta(days=1)
+                        stop_date = current_date + relativedelta(days=7)
 
                         driver.get(f"{self.projudi_url}/ConsultaPublicacao") 
 
@@ -169,7 +174,13 @@ class metaScrappingTJGO(BaseScrapping):
                         log_error(e)
                         print(f"Erro no ciclo de paginação do worker metaScrappingTJGO")   
                     finally:
-                        current_date += relativedelta(days=1)
+                        if(metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA > current_date):
+                            current_date = metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA + relativedelta(days=7)
+                        else:
+                            current_date += relativedelta(days=7)
+
+                        metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA = current_date
+
         except Exception as e:                                     
             log_error(e)
             print(f"Erro geral no worker metaScrappingTJGO")  

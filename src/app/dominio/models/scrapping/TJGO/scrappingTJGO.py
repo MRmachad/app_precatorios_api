@@ -20,8 +20,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.remote.webdriver import WebDriver as WebDriverRemote
 from selenium.webdriver.chrome.webdriver import WebDriver as WebDriverChrome
 from config import config
+from src.core.util.gerenciadorDeLog import log_error
 
 class scrappingTJGO(BaseScrapping):
+
+    PROCESSO_EM_RASTREAMENTO : MetaProcesso | None = None
 
     def __init__(self) -> None:
 
@@ -50,6 +53,7 @@ class scrappingTJGO(BaseScrapping):
             
             chrome_options = Options()
             chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--window-size=1920,1080")
             chrome_options.add_argument('--disable-gpu')
             chrome_options.add_argument("--disable-images")
             chrome_options.add_argument("--no-sandbox")
@@ -76,26 +80,23 @@ class scrappingTJGO(BaseScrapping):
             driver.find_element(By.XPATH, "//form[@id='formLogin']//input[@type='submit' and @value='Entrar']").click()
             page = 1 
             page_size = 100
-            ultima_pub_detalhe = await self.servicoDeProcesso.obtenha_ultima_data_publicacao()
+            primeiro_inexistente = await self.servicoDeProcesso.obtenha_data_primeiro_inexistente() 
 
-            if(ultima_pub_detalhe is not None):
-                print(f"data ultima pub detalhes => {ultima_pub_detalhe.strftime("%d/%m/%Y")} ", flush=True)
-
-            while True:
-                meta_processos: list[MetaProcesso] = await self.servicoDeMetaProcesso.obtenha_muitos_pag(page=page, page_size=page_size, from_date=ultima_pub_detalhe)
-                if(meta_processos is not None and len(meta_processos) > 0):
-                    await self.findAndInsert(metaProcessos=meta_processos, driver=driver)
-
-                    if len(meta_processos) < page_size:
+            if(primeiro_inexistente is not None):
+                print(f"primeiro inexistente detalhes => {primeiro_inexistente.NumeroProcesso} ", flush=True)
+                inexistente = primeiro_inexistente
+                while True:
+                    time.sleep(1)
+                    await self.findAndInsert(metaProcessos=[inexistente], driver=driver)
+                    
+                    inexistente = await self.servicoDeProcesso.obtenha_data_primeiro_inexistente() 
+                    if(inexistente is None):
                         break
 
-                    page += 1
-                else:
-                    break
-
         except Exception as e:
-            print(f"Erro no worker scrappingTJGO {e}")  
-            pass
+            log_error(e)
+            print(f"Erro no worker scrappingTJGO")  
+            
         
         
     async def findAndInsert(self, metaProcessos:list[MetaProcesso], driver:WebDriverChrome | WebDriverRemote):        
@@ -138,13 +139,11 @@ class scrappingTJGO(BaseScrapping):
                     Valor= valorCausa[0].text if len(valorCausa) > 0  else '',
                     Serventia = serventia[0].text if len(serventia) > 0  else ''                
                 )
-                processo_existente : ProcessoMixin = await self.servicoDeProcesso.obtenha_por_numeroProcesso(metaProcesso.NumeroProcessoConsulta)
-                if(processo_existente is None):
-                    processo_criado : ProcessoMixin = await self.servicoDeProcesso.adicione(processo)
+                await self.servicoDeProcesso.adicione_ou_atualize_um_processo(processo)
 
             except Exception as e:
-                print(f"Erro ao obter informações: {e}")
-                pass
+                log_error(e)
+                print(f"Erro ao obter informações")
             finally:
                 driver.back()
         

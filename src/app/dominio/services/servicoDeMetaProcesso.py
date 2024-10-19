@@ -48,13 +48,15 @@ class ServicoDeMetaProcesso(ServicoBase):
             if not todos_resultados:              
                 await self.adicione_muitos(data)
             else:
-                for row in todos_resultados:
-                    print(row)
                 processos_existentes = {row[0].NumeroProcesso for row in todos_resultados}
                 processos_para_inserir = [processo for processo in data if processo.NumeroProcesso not in processos_existentes]
+                processos_unicos = {}
+                for processo in processos_para_inserir:
+                    if processo.NumeroProcesso not in processos_unicos:
+                        processos_unicos[processo.NumeroProcesso] = processo
 
                 if processos_para_inserir:
-                    await self.adicione_muitos(processos_para_inserir)
+                    await self.adicione_muitos(list(processos_unicos.values()))
 
         except Exception as e:
             await self.unidadeDeTrabalho.revertaTrasacao()
