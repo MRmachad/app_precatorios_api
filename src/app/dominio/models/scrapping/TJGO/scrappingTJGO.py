@@ -49,7 +49,7 @@ class scrappingTJGO(BaseScrapping):
         user_agent = random.choice(user_agents)
         
         chrome_options = Options()
-        chrome_options.add_argument("--headless")
+        #chrome_options.add_argument("--headless")
         chrome_options.add_argument("--window-size=1920,1080")
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument("--disable-images")
@@ -145,29 +145,92 @@ class scrappingTJGO(BaseScrapping):
                 self.driver.find_elements(By.XPATH, '/html/body/div[4]/div[3]/div/button')[0].click()
                 return False
 
-            classe = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Classe')]/following::span)[1]")
-            valorCausa = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Valor')]/following::span)[1]")
-            serventia = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Serventia')]/following::span)[1]")
-            assunto = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Assunto(s)')]/following::span)[1]/table/tbody/tr/td")
-            nomeAtivo = self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[text()='Nome']/following-sibling::span[contains(@class, 'span1 nomes')]")
-            nomePassivo= self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[text()='Nome']/following-sibling::span[contains(@class, 'span1 nomes')]")
-            CpfCNPJ_NomePoloAtivo = self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[contains(text(), 'CPF/CNPJ')]/following-sibling::span[@class='span2']")
-            CpfCNPJ_PoloPassivo = self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[contains(text(), 'CPF/CNPJ')]/following-sibling::span[@class='span2']")    
-                                    
-            processo : ProcessoSchemma = ProcessoSchemma(
-                meta_processo_id = metaProcesso.uuid,
-                NumeroProcesso = metaProcesso.NumeroProcesso,
-                Classe= classe[0].text if len(classe) > 0  else '',
-                Assunto= assunto[0].text if len(assunto) > 0  else '',
-                Valor= valorCausa[0].text if len(valorCausa) > 0  else '',
-                Serventia = serventia[0].text if len(serventia) > 0  else '',    
-                NumeroProcessoConsulta= metaProcesso.NumeroProcessoConsulta,
-                NomePoloAtivo= ", ".join([x.text for x in nomeAtivo if x]) if len(nomeAtivo) > 0  else '',
-                NomePoloPassivo= ", ".join([x.text for x in nomePassivo if x]) if len(nomePassivo) > 0  else '',
-                CpfCNPJPoloPassivo= ",".join([x.text for x in CpfCNPJ_PoloPassivo if x]) if len(CpfCNPJ_PoloPassivo) > 0 else '',
-                CpfCNPJNomePoloAtivo= ",".join([x.text for x in CpfCNPJ_NomePoloAtivo if x]) if len(CpfCNPJ_NomePoloAtivo) > 0 else '',
-            )
-            await self.servicoDeProcesso.adicione_ou_atualize_um_processo(processo)
+            print("PASSou por aquiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii#########################################################################")
+            if len(self.driver.find_elements(By.XPATH, f"//div[@id='divLocalizar']//table[@class='Tabela']//td[.//text()[normalize-space() = '{metaProcesso.NumeroProcessoConsulta}']]"))==0:
+                print("PASSou por aquiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii 22222#########################################################################")
+                classe = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Classe')]/following::span)[1]")
+                print(metaProcesso.NumeroProcessoConsulta)
+                print(f"Aqui{classe}")
+                valorCausa = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Valor')]/following::span)[1]")
+                serventia = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Serventia')]/following::span)[1]")
+                assunto = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Assunto(s)')]/following::span)[1]/table/tbody/tr/td")
+                nomeAtivo = self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[text()='Nome']/following-sibling::span[contains(@class, 'span1 nomes')]")
+                nomePassivo= self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[text()='Nome']/following-sibling::span[contains(@class, 'span1 nomes')]")
+                CpfCNPJ_NomePoloAtivo = self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[contains(text(), 'CPF/CNPJ')]/following-sibling::span[@class='span2']")
+                CpfCNPJ_PoloPassivo = self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[contains(text(), 'CPF/CNPJ')]/following-sibling::span[@class='span2']")    
+                                        
+                processo : ProcessoSchemma = ProcessoSchemma(
+                    meta_processo_id = metaProcesso.uuid,
+                    NumeroProcesso = metaProcesso.NumeroProcesso,
+                    Classe= classe[0].text if len(classe) > 0  else '',
+                    Assunto= assunto[0].text if len(assunto) > 0  else '',
+                    Valor= valorCausa[0].text.replace(".", "").replace(",", ".") if len(valorCausa) > 0  else '',
+                    Serventia = serventia[0].text if len(serventia) > 0  else '',    
+                    NumeroProcessoConsulta= metaProcesso.NumeroProcessoConsulta,
+                    NomePoloAtivo= ", ".join([x.text for x in nomeAtivo if x]) if len(nomeAtivo) > 0  else '',
+                    NomePoloPassivo= ", ".join([x.text for x in nomePassivo if x]) if len(nomePassivo) > 0  else '',
+                    CpfCNPJPoloPassivo= ",".join([x.text for x in CpfCNPJ_PoloPassivo if x]) if len(CpfCNPJ_PoloPassivo) > 0 else '',
+                    CpfCNPJNomePoloAtivo= ",".join([x.text for x in CpfCNPJ_NomePoloAtivo if x]) if len(CpfCNPJ_NomePoloAtivo) > 0 else '',
+                )
+
+
+            
+                await self.servicoDeProcesso.adicione_ou_atualize_um_processo(processo)
+
+                self.driver.back()
+
+            else:
+                campo_pagina = self.driver.find_element(By.XPATH, '//*[@class="CaixaTextoPosicionar"]')   
+                print("PASSou por aquiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii 33333333333333333#########################################################################")                  
+                valor_pagina = campo_pagina.get_attribute("value")  
+                print(valor_pagina)
+                for i in range(0, len(valor_pagina)):
+                    print("Passou por aqui agora")
+                    print("PASSou por aquiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii 44444444444444444#########################################################################") 
+
+                    botao_ir = self.driver.find_element(By.XPATH, '//*[@value="Ir"]')
+                    botao_ir.click() 
+                    print(len(self.driver.find_elements(By.XPATH, f"//div[@id='divLocalizar']//table[@class='Tabela']//td[.//text()[normalize-space() = '{metaProcesso.NumeroProcessoConsulta}']]")))
+                    for numero in range(0,len(self.driver.find_elements(By.XPATH, f"//div[@id='divLocalizar']//table[@class='Tabela']//td[.//text()[normalize-space() = '{metaProcesso.NumeroProcessoConsulta}']]"))+1):
+
+                        print("PASSou por aquiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii 55555555555#########################################################################") 
+                        
+
+                        self.driver.find_element(By.XPATH, f"//tbody[@id='tabListaProcesso']/tr[@class='TabelaLinha{numero+1}']/td[contains(text(),'{numero+1}')]//following-sibling::td/button[@name='formLocalizarimgEditar']").click()
+                        time.sleep(1)
+                        
+                        classe = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Classe')]/following::span)[1]")
+                        print(f"Aqui{classe[0].text}")
+                        print(f"Aqui1{classe[0].text}")
+                        valorCausa = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Valor')]/following::span)[1]")
+                        serventia = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Serventia')]/following::span)[1]")
+                        assunto = self.driver.find_elements(By.XPATH, "(//fieldset[@id='VisualizaDados']//div[contains(text(),'Assunto(s)')]/following::span)[1]/table/tbody/tr/td")
+                        nomeAtivo = self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[text()='Nome']/following-sibling::span[contains(@class, 'span1 nomes')]")
+                        nomePassivo= self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[text()='Nome']/following-sibling::span[contains(@class, 'span1 nomes')]")
+                        CpfCNPJ_NomePoloAtivo = self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Ativo')]//div[contains(text(), 'CPF/CNPJ')]/following-sibling::span[@class='span2']")
+                        CpfCNPJ_PoloPassivo = self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[contains(text(), 'CPF/CNPJ')]/following-sibling::span[@class='span2'][contains(text(), '.')]")    
+                        #//fieldset[@id='VisualizaDados'][contains(legend, 'Autos')]//div[contains(text(), 'Número')]/following-sibling::span[@class='bold'][contains(text(), ".")]
+                        NumeroProcessoNovo = self.driver.find_elements(By.XPATH, "//fieldset[@id='VisualizaDados'][contains(legend, 'Polo Passivo')]//div[contains(text(), 'CPF/CNPJ')]/following-sibling::span[@class='span2'][contains(text(), '.')]")                        
+                        processo : ProcessoSchemma = ProcessoSchemma(
+                            meta_processo_id = metaProcesso.uuid,
+                            NumeroProcesso = NumeroProcessoNovo,
+                            Classe= classe[0].text if len(classe) > 0  else '',
+                            Assunto= assunto[0].text if len(assunto) > 0  else '',
+                            Valor= valorCausa[0].text.replace(".", "").replace(",", ".") if len(valorCausa) > 0  else '',
+                            
+                            Serventia = serventia[0].text if len(serventia) > 0  else '',    
+                            NumeroProcessoConsulta= metaProcesso.NumeroProcessoConsulta,
+                            NomePoloAtivo= ", ".join([x.text for x in nomeAtivo if x]) if len(nomeAtivo) > 0  else '',
+                            NomePoloPassivo= ", ".join([x.text for x in nomePassivo if x]) if len(nomePassivo) > 0  else '',
+                            CpfCNPJPoloPassivo= ",".join([x.text for x in CpfCNPJ_PoloPassivo if x]) if len(CpfCNPJ_PoloPassivo) > 0 else '',
+                            CpfCNPJNomePoloAtivo= ",".join([x.text for x in CpfCNPJ_NomePoloAtivo if x]) if len(CpfCNPJ_NomePoloAtivo) > 0 else '',
+                        )
+                        
+                        await self.servicoDeProcesso.adicione_ou_atualize_um_processo(processo)
+
+                        self.driver.back()
+                
+                self.driver.back()
             
             return True
         except Exception as e:
