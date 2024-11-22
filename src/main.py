@@ -12,5 +12,8 @@ app.include_router(processoRoute.router)
 
 @app.on_event("startup")
 async def startup_event():
-    threading.Thread(target=register_inversion_control, daemon=True).start() 
-    print(f"Starting {config.app_name} version {config.version}")
+    try:
+        threading.Thread(target=register_inversion_control, daemon=True).start() 
+        print(f"Starting {config.app_name} version {config.version}")
+    except:    
+        pass

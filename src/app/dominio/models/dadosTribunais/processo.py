@@ -1,24 +1,30 @@
 from pydantic import BaseModel
 
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey, String, Integer,Float,Numeric
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.repositorio.baseModel import Base, TimestampMixin, TimestampMixinSchema, UuidMixin, UuidMixinSchema
 
 """Mixin é classe de abstração do SQLAlchemy que mapeia a entidade no banco"""
 class ProcessoMixin(Base, UuidMixin, TimestampMixin):
 
     __tablename__ = "processo"
-    NumeroProcesso: Mapped[str] = mapped_column(String(255),nullable=True, unique=True, index=True)
-    NumeroProcessoConsulta: Mapped[str] = mapped_column(String(255),nullable=True, index=True)
-    Classe: Mapped[str] = mapped_column(String(255),nullable=True)
-    NomePoloPassivo: Mapped[str] = mapped_column(String(255),nullable=True)
-    NomePoloAtivo: Mapped[str] = mapped_column(String(255),nullable=True)
-    CpfCNPJPoloPassivo: Mapped[str] = mapped_column(String(255),nullable=True)
-    CpfCNPJNomePoloAtivo: Mapped[str] = mapped_column(String(255),nullable=True)
-    Assunto: Mapped[str] = mapped_column(String(255),nullable=True)
-    Valor: Mapped[str] = mapped_column(String(255),nullable=True)
-    Serventia: Mapped[str] = mapped_column(String(255),nullable=True)
-    Serventia2: Mapped[str] = mapped_column(String(255),nullable=True)
+    NumeroProcesso: Mapped[str] = mapped_column(String(),nullable=True, unique=True, index=True)
+    NumeroProcessoConsulta: Mapped[str] = mapped_column(String(),nullable=True, index=True)
+    Classe: Mapped[str] = mapped_column(String(),nullable=True)
+    NomePoloPassivo: Mapped[str] = mapped_column(String(),nullable=True)
+    NomePoloAtivo: Mapped[str] = mapped_column(String(),nullable=True)
+    CpfCNPJPoloPassivo: Mapped[str] = mapped_column(String(),nullable=True)
+    CpfCNPJNomePoloAtivo: Mapped[str] = mapped_column(String(),nullable=True)
+    Assunto: Mapped[str] = mapped_column(String(),nullable=True)
+    
+    Valor: Mapped[Float] = mapped_column(Float(),nullable=True)
+    
+    Serventia: Mapped[str] = mapped_column(String(),nullable=True)
+    Serventia2: Mapped[str] = mapped_column(String(),nullable=True)
+
+    meta_processo_id: Mapped[str] = mapped_column(ForeignKey('metaProcesso.uuid'))
+
+    meta_processo: Mapped['MetaProcessoMixin'] = relationship("MetaProcessoMixin")
     
 """BaseModel é uma abstração para validação e tornar a estrutura apta a trabalhar com orm"""
 class ProcessoSchemma(BaseModel):
@@ -32,6 +38,7 @@ class ProcessoSchemma(BaseModel):
         Assunto : str
         Valor : str
         Serventia : str
+        meta_processo_id : str
         
 class Processo(ProcessoSchemma, UuidMixinSchema, TimestampMixinSchema):
         NumeroProcesso : str
@@ -44,3 +51,4 @@ class Processo(ProcessoSchemma, UuidMixinSchema, TimestampMixinSchema):
         Assunto : str
         Valor : str
         Serventia : str
+        meta_processo_id : str

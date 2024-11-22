@@ -28,16 +28,53 @@
     },
     "hub_selenium": {
       "restart": "unless-stopped",
+      "image": "selenium/hub:4.21.0",
       "container_name": "hub_selenium",
-      "image": "selenium/standalone-chrome",
       "ports": [
         "4444:4444"
-      ]
+      ],
+      "shm_size": "256mb"
+    },
+    "chrome-node-processo": {
+      "restart": "unless-stopped",
+      "image": "selenium/node-chrome:4.21.0",
+      "container_name": "chrome-node-processo",
+      "depends_on": [
+        "hub_selenium"
+      ],
+      "environment": {
+        "SE_EVENT_BUS_HOST": "hub_selenium",
+        "SE_EVENT_BUS_PUBLISH_PORT": "4442",
+        "SE_EVENT_BUS_SUBSCRIBE_PORT": "4443",
+        "SE_NODE_MAX_SESSIONS": "5"
+      },
+      "ports": [
+        "5900:5900"
+      ],
+      "shm_size": "526mb"
+    },
+    "chrome-node-meta": {
+      "restart": "unless-stopped",
+      "image": "selenium/node-chrome:4.21.0",
+      "container_name": "chrome-node-meta",
+      "depends_on": [
+        "hub_selenium"
+      ],
+      "environment": {
+        "SE_EVENT_BUS_HOST": "hub_selenium",
+        "SE_EVENT_BUS_PUBLISH_PORT": "4442",
+        "SE_EVENT_BUS_SUBSCRIBE_PORT": "4443",
+        "SE_NODE_MAX_SESSIONS": "5"
+      },
+      "ports": [
+        "5901:5900"
+      ],
+      "shm_size": "526mb"
     },
     "app_precatorios": {
       "restart": "unless-stopped",
       "container_name": "app_precatorios",
-      "image": "umbit/precatorios_image:prod.1.0.6",
+      "build": ".",
       "depends_on": {
         "db_app_precatorios": {
           "condition": "service_healthy"
@@ -48,7 +85,11 @@
       },
       "ports": [
         "5098:80"
-      ]
+      ],
+      "environment": [
+        "TZ=America/Sao_Paulo"
+      ],
+      "shm_size": "256mb"
     }
   }
 }

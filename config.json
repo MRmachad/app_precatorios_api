@@ -2,7 +2,7 @@
     "app_name": "Precatorios App",
     "version": "1.0.0",
     "connections": {
-        "database": "mariadb+mariadbconnector://root:qwerty@db_app_precatorios:3306/precatorios",
+        "database": "mariadb+mariadbconnector://root:qwerty@localhost:3307/precatorios",
         "storage" : "DefaultEndpointsProtocol=https;AccountName=storageprecatorios;AccountKey=+7v/x+vQCel5F9rNefgUg2u9GweV+bh1h7Xc4gOVQJ2Jx3DAgegknaDD1v8KedFwfyBo+JuZIRjk+AStky0FQg==;EndpointSuffix=core.windows.net",
         "datajud":{
             "schema":"APIKey",
@@ -10,8 +10,12 @@
             "tribunais":{
                 "tjgo":"https://api-publica.datajud.cnj.jus.br/api_publica_tjgo"
             }
+        },
+        "projudi":{
+            "login":"01093980176",
+            "senha":"Capfi@123"
         }
     },
     "hub_selenium": "http://hub_selenium:4444/wd/hub",
-    "ehProd": true
+    "ehProd": false
 }
