@@ -9,7 +9,7 @@ from src.core.worker.workerCron import WorkerCron
 
 class ScratchWorker(WorkerCron):
     def __init__(self) -> None:
-        super().__init__(23,59,55,True)
+        super().__init__(20,30,0,True)
 
     async def job(self) -> Any:
         import_submodules( "src.app.dominio.models.scrapping")

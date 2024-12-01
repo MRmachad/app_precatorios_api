@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String, Integer,Float,Numeric, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.repositorio.baseModel import Base, TimestampMixin, TimestampMixinSchema, UuidMixin, UuidMixinSchema
 
@@ -10,15 +10,17 @@ class ProcessoMixin(Base, UuidMixin, TimestampMixin):
     __tablename__ = "processo"
     NumeroProcesso: Mapped[str] = mapped_column(String(255),nullable=True, unique=True, index=True)
     NumeroProcessoConsulta: Mapped[str] = mapped_column(String(255),nullable=True, index=True)
-    Classe: Mapped[str] = mapped_column(String(255),nullable=True)
-    NomePoloPassivo: Mapped[str] = mapped_column(String(255),nullable=True)
-    NomePoloAtivo: Mapped[str] = mapped_column(String(255),nullable=True)
-    CpfCNPJPoloPassivo: Mapped[str] = mapped_column(String(255),nullable=True)
-    CpfCNPJNomePoloAtivo: Mapped[str] = mapped_column(String(255),nullable=True)
-    Assunto: Mapped[str] = mapped_column(String(255),nullable=True)
-    Valor: Mapped[str] = mapped_column(String(255),nullable=True)
-    Serventia: Mapped[str] = mapped_column(String(255),nullable=True)
-    Serventia2: Mapped[str] = mapped_column(String(255),nullable=True)
+    Classe: Mapped[str] = mapped_column(Text(),nullable=True)
+    NomePoloPassivo: Mapped[str] = mapped_column(Text(),nullable=True)
+    NomePoloAtivo: Mapped[str] = mapped_column(Text(),nullable=True)
+    CpfCNPJPoloPassivo: Mapped[str] = mapped_column(Text(),nullable=True)
+    CpfCNPJNomePoloAtivo: Mapped[str] = mapped_column(Text(),nullable=True)
+    Assunto: Mapped[str] = mapped_column(Text(),nullable=True)
+    
+    Valor: Mapped[Float] = mapped_column(Float(),nullable=True)
+    
+    Serventia: Mapped[str] = mapped_column(Text(),nullable=True)
+    Serventia2: Mapped[str] = mapped_column(Text(),nullable=True)
 
     meta_processo_id: Mapped[str] = mapped_column(ForeignKey('metaProcesso.uuid'))
 
