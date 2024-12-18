@@ -11,7 +11,7 @@ class MetaProcessoMixin(Base, UuidMixin, TimestampMixin):
 
     __tablename__ = "metaProcesso"
     NumeroProcesso: Mapped[str] = mapped_column(String(255),nullable=False, unique=True, index=True)
-    NumeroProcessoConsulta: Mapped[str] = mapped_column(String(255),nullable=False, index=True)
+    NumeroProcessoConsulta: Mapped[str] = mapped_column(String(255),nullable=False, unique=False, index=True)
     Tipo: Mapped[str] = mapped_column(String(255),nullable=False)
     DataPublicacao: Mapped[datetime] = mapped_column(
         DateTime,

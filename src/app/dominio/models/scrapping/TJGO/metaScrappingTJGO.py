@@ -29,8 +29,7 @@ from config import config
 from src.core.util.gerenciadorDeLog import log_error
 
 class metaScrappingTJGO(BaseScrapping):
-
-    DATA_INICIO_ULTIMA_VARREDURA : datetime | None = None
+    WORK_INST : bool = False
 
     def __init__(self) -> None:
 
@@ -90,24 +89,28 @@ class metaScrappingTJGO(BaseScrapping):
             if(len(campo_pagina) > 0):
                 return data_ultima_pub + relativedelta(days=1)
             else:
-                return None
+                print(f"\nAtualizando meta processos \n", flush=True)
+                return datetime(2020, 1, 1)
             
         except Exception as e:            
             print(f"Erro no worker metaScrappingTJGO busca data incial {e}")  
 
     async def work(self) -> Any:
-        try:               
-
-            end_date = datetime.now()
-            start_date = await self.obtenha_inicio_paginacao()
+        
+        if(not metaScrappingTJGO.WORK_INST):   
             
-            if(start_date != None):
-                current_date = start_date if metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA is None else metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA + relativedelta(days=1)
-                metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA = current_date
+            metaScrappingTJGO.WORK_INST = True
+
+            try:             
+                end_date = datetime.now()
+                start_date = await self.obtenha_inicio_paginacao()
+                
+                current_date = start_date 
+
                 while current_date <= end_date:
                     try:                        
                         _metaProcessos : List[MetaProcessoSchemma]= []
-                        stop_date = current_date
+                        stop_date = current_date + relativedelta(days=1)
 
                         print(f"data corrente meta consulta => {current_date.strftime("%d/%m/%Y")}  => {stop_date.strftime("%d/%m/%Y")}", flush=True)
 
@@ -126,12 +129,13 @@ class metaScrappingTJGO(BaseScrapping):
                             continue
                         
                         for pagina in range(1, int(valor_pagina) + 1):
-                            try:                                  
-                                campo_pagina = self.driver.find_element(By.XPATH, '//*[@id="CaixaTextoPosicionar"]')                              
-                                campo_pagina.clear()  
-                                campo_pagina.send_keys(str(pagina))  
+
+                            try:                              
 
                                 try:
+                                    campo_pagina = self.driver.find_element(By.XPATH, '//*[@id="CaixaTextoPosicionar"]')                              
+                                    campo_pagina.clear()  
+                                    campo_pagina.send_keys(str(pagina))  
                                     botao_ir = self.driver.find_element(By.XPATH, '//*[@value="Ir"]')
                                     botao_ir.click()      
                                     
@@ -139,7 +143,7 @@ class metaScrappingTJGO(BaseScrapping):
                                     dataPublicacao = self.driver.find_element(By.XPATH, "//*[@id='formLocalizar']//div[@class='search-result']/p/b/i[contains(text(), 'Publicado')]")                      
                                 except Exception as e:                                    
                                     log_error(e)
-                                    print(f"Erro ao clica em botão ir {pagina}")   
+                                    print(f"Erro ao clicar em botão ir {pagina}")   
 
                                     self.driver.refresh() 
                                     time.sleep(3) 
@@ -160,7 +164,7 @@ class metaScrappingTJGO(BaseScrapping):
                                         continue                              
 
                                 metaProcesso : MetaProcessoSchemma = MetaProcessoSchemma(
-                                    NumeroProcesso=numeroProcesso.text,         
+                                    NumeroProcesso=numeroProcesso.text.replace("-","."),         
                                     NumeroProcessoConsulta=  re.search(r'\d{7}[-.]\d{2}', numeroProcesso.text).group().replace(".","-"),
                                     DataPublicacao=datetime.strptime(dataPublicacao.text.split('Publicado em ')[1], '%d/%m/%Y %H:%M:%S')
                                 )
@@ -169,26 +173,45 @@ class metaScrappingTJGO(BaseScrapping):
                                 _metaProcessos.append(metaProcesso)
                             except Exception as e:
                                 log_error(e)
-                                print(f"Erro após refresh na página {pagina}")        
+                                print(f"Erro após refresh na página {pagina}")   
+
                         if _metaProcessos:
                             await self.servicoDeMetaProcesso.adicioneTodosCasoNaoExista(_metaProcessos)
+                            
                     except Exception as e:   
                         log_error(e)
                         print(f"Erro no ciclo de paginação do worker metaScrappingTJGO")   
                     finally:
-                        if(metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA > current_date):
-                            current_date = metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA + relativedelta(days=1)
-                        else:
-                            current_date += relativedelta(days=1)
-
-                        metaScrappingTJGO.DATA_INICIO_ULTIMA_VARREDURA = current_date
-
-        except Exception as e:                                     
-            log_error(e)
-            print(f"Erro geral no worker metaScrappingTJGO")  
+                            current_date += relativedelta(days=1)                    
+            except Exception as e:                                     
+                log_error(e)                
+                print(f"Erro geral no worker metaScrappingTJGO")  
+            finally:
+                metaScrappingTJGO.WORK_INST = False
             
         
         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
          
         
 

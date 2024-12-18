@@ -8,7 +8,7 @@ class Session:
 
     def obtenha_engine(self):
         print(f"Conexão {config.data["connections"]["database"]}")
-        return create_engine(config.data["connections"]["database"], echo=True)
+        return create_engine(config.data["connections"]["database"], echo=False)
 
     def obtenha_sessao(self):
         engine = self.obtenha_engine()

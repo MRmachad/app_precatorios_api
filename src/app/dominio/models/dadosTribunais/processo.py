@@ -9,7 +9,7 @@ class ProcessoMixin(Base, UuidMixin, TimestampMixin):
 
     __tablename__ = "processo"
     NumeroProcesso: Mapped[str] = mapped_column(String(255),nullable=True, unique=True, index=True)
-    NumeroProcessoConsulta: Mapped[str] = mapped_column(String(255),nullable=True, index=True)
+    NumeroProcessoConsulta: Mapped[str] = mapped_column(String(255),nullable=True, unique=False, index=True)
     Classe: Mapped[str] = mapped_column(Text(),nullable=True)
     NomePoloPassivo: Mapped[str] = mapped_column(Text(),nullable=True)
     NomePoloAtivo: Mapped[str] = mapped_column(Text(),nullable=True)
