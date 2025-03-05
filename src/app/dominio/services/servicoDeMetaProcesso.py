@@ -75,9 +75,9 @@ class ServicoDeMetaProcesso(ServicoBase):
 
         return meta_processos
     
-    async def obtenha_ultima_data_publicacao(self) -> datetime | None:
+    async def obtenha_ultima_data_publicacao(self, tipo) -> datetime | None:
 
-        stmt = select(self.model.DataPublicacao).order_by(desc(self.model.DataPublicacao)).limit(1)
+        stmt = select(self.model.DataPublicacao).where(self.model.Tipo == tipo).order_by(desc(self.model.DataPublicacao)).limit(1)
 
         result = await self.unidadeDeTrabalho.execute(stmt)
 

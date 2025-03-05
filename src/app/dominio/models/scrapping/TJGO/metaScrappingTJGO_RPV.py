@@ -72,9 +72,9 @@ class metaScrappingTJGO(BaseScrapping):
 
     async def obtenha_inicio_paginacao(self) -> datetime | None:
         try:
-            data_ultima_pub = await self.servicoDeMetaProcesso.obtenha_ultima_data_publicacao(tipo=TipoDeProcesso.PRECATORIO)
+            data_ultima_pub = await self.servicoDeMetaProcesso.obtenha_ultima_data_publicacao(tipo=TipoDeProcesso.RPV) - relativedelta(months=6)
             if(data_ultima_pub == None):
-                return datetime(2020, 1, 1)
+                return (datetime.now() - relativedelta(months=6))
             
             self.driver.get(f"{self.projudi_url}/ConsultaPublicacao") 
 
@@ -90,7 +90,7 @@ class metaScrappingTJGO(BaseScrapping):
                 return data_ultima_pub + relativedelta(days=1)
             else:
                 print(f"\nAtualizando meta processos \n", flush=True)
-                return datetime(2020, 1, 1)
+                return (datetime.now() - relativedelta(months=6))
             
         except Exception as e:            
             print(f"Erro no worker metaScrappingTJGO busca data incial {e}")  
@@ -116,7 +116,7 @@ class metaScrappingTJGO(BaseScrapping):
 
                         self.driver.get(f"{self.projudi_url}/ConsultaPublicacao") 
 
-                        self.driver.find_element(By.ID, "Texto").send_keys("Expeça-se Precatório OU precatório")
+                        self.driver.find_element(By.ID, "Texto").send_keys("RPV")
                         self.driver.find_element(By.ID, "DataFinal").send_keys(stop_date.strftime("%d/%m/%Y"))
                         self.driver.find_element(By.ID, "DataInicial").send_keys(current_date.strftime("%d/%m/%Y"))
 
@@ -168,7 +168,7 @@ class metaScrappingTJGO(BaseScrapping):
                                     NumeroProcessoConsulta=  re.search(r'\d{7}[-.]\d{2}', numeroProcesso.text).group().replace(".","-"),
                                     DataPublicacao=datetime.strptime(dataPublicacao.text.split('Publicado em ')[1], '%d/%m/%Y %H:%M:%S')
                                 )
-                                metaProcesso.add_tipo(TipoDeProcesso.PRECATORIO)
+                                metaProcesso.add_tipo(TipoDeProcesso.RPV)
 
                                 _metaProcessos.append(metaProcesso)
                             except Exception as e:

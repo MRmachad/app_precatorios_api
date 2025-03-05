@@ -5,3 +5,4 @@ class TipoDeProcesso(Enum):
     ADMINISTRATIVO = "Administrativo"
     JUDICIAL = "Judicial"
     ARBITRAL = "Arbitral"
+    RPV = "RPV"
